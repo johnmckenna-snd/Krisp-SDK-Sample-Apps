@@ -11,6 +11,7 @@
 #include "sound_file.hpp"
 
 
+static float g_ratio = 0.0;
 
 static int krispAudioNcCleanAmbientNoise(
 		KrispAudioSessionID pSession,
@@ -19,8 +20,14 @@ static int krispAudioNcCleanAmbientNoise(
 		short * pFrameOut,
 		unsigned int frameOutSize)
 {
-	return krispAudioNcCleanAmbientNoiseInt16(
-		pSession, pFrameIn, frameInSize, pFrameOut, frameOutSize);
+	if (g_ratio == 0.0) {
+		return krispAudioNcCleanAmbientNoiseInt16(
+			pSession, pFrameIn, frameInSize, pFrameOut, frameOutSize);
+	}
+	else {
+		return krispAudioNcCleanAmbientNoiseInt16WithControl(
+			pSession, pFrameIn, frameInSize, pFrameOut, frameOutSize, g_ratio);
+	}
 }
 
 static int krispAudioNcCleanAmbientNoise(
@@ -30,8 +37,14 @@ static int krispAudioNcCleanAmbientNoise(
 		float * pFrameOut,
 		unsigned int frameOutSize)
 {
-	return krispAudioNcCleanAmbientNoiseFloat(
-		pSession, pFrameIn, frameInSize, pFrameOut, frameOutSize);
+	if (g_ratio == 100.f) {
+		return krispAudioNcCleanAmbientNoiseFloat(
+			pSession, pFrameIn, frameInSize, pFrameOut, frameOutSize);
+	}
+	else {
+		return krispAudioNcCleanAmbientNoiseFloatWithControl(
+			pSession, pFrameIn, frameInSize, pFrameOut, frameOutSize, g_ratio);
+	}
 }
 
 static int krispAudioNcWithStatsCleanAmbientNoise(
@@ -65,17 +78,20 @@ int error(const T& e) {
 }
 
 bool parseArguments(std::string& input, std::string& output,
-		std::string& weight, bool &stats, int argc, char** argv) {
+		std::string& weight, std::string & ratio,
+		bool &stats, int argc, char** argv) {
 	ArgumentParser p(argc, argv);
 	p.addArgument("--input", "-i", IMPORTANT);
 	p.addArgument("--output", "-o",IMPORTANT);
 	p.addArgument("--weight_file", "-w", IMPORTANT);
 	p.addArgument("--stats", "-s", OPTIONAL);
+	p.addArgument("--ratio", "-r", IMPORTANT);
 	if (p.parse()) {
 		input = p.getArgument("-i");
 		output = p.getArgument("-o");
 		weight = p.getArgument("-w");
 		stats = p.getOptionalArgument("-s");
+		ratio = p.getArgument("-r");
 	} else {
 		std::cerr << p.getError();
 		return false;
@@ -169,6 +185,7 @@ int ncWavFileTmpl(
 		const SoundFile & inSndFile,
 		const std::string & output,
 		const std::string & weight,
+		const std::string & ratio,
 		bool withStats) {
 	std::vector<SamplingFormat> wavDataIn;
 	std::vector<SamplingFormat> wavDataOut;
@@ -220,6 +237,22 @@ int ncWavFileTmpl(
 
 	KrispAudioNcStats ncStats;
 	KrispAudioNcPerFrameInfo perFrameInfo;
+
+	if (ratio.size() && ratio[0] != 0) {
+		try {
+			g_ratio = std::stof(ratio);
+		}
+		catch (const std::invalid_argument & e) {
+			assert(0);
+		}
+		catch (const std::out_of_range & e) {
+			assert(0);
+		}
+		if (g_ratio > 100.f || g_ratio <= 0) {
+			assert(0);
+		}
+	}
+
 
 	wavDataOut.resize(wavDataIn.size() * outputFrameSize / inputFrameSize);
 	size_t i;
@@ -290,7 +323,7 @@ int ncWavFileTmpl(
 }
 
 int ncWavFile(const std::string& input, const std::string& output,
-		const std::string& weight, bool withStats) {
+		const std::string& weight, const std::string & ratio, bool withStats) {
 	SoundFile inSndFile;
 	inSndFile.loadHeader(input);
 	if (inSndFile.getHasError()) {
@@ -298,19 +331,21 @@ int ncWavFile(const std::string& input, const std::string& output,
 	}
 	auto sndFileHeader = inSndFile.getHeader();
 	if (sndFileHeader.getFormat() == SoundFileFormat::PCM16) {
-		return ncWavFileTmpl<short>(inSndFile, output, weight, withStats);
+		return ncWavFileTmpl<short>(inSndFile, output, weight, ratio,
+			withStats);
 	}
 	if (sndFileHeader.getFormat() == SoundFileFormat::FLOAT) {
-		return ncWavFileTmpl<float>(inSndFile, output, weight, withStats);
+		return ncWavFileTmpl<float>(inSndFile, output, weight, ratio,
+			withStats);
 	}
 	return error("The sound file format should be PCM16 or FLOAT.");
 }
 
 int main(int argc, char** argv) {
-	std::string in, out, weight;
+	std::string in, out, weight, ratio;
 	bool stats = false;
-	if (parseArguments(in, out, weight, stats, argc, argv)) {
-		return ncWavFile(in, out, weight, stats);
+	if (parseArguments(in, out, weight, ratio, stats, argc, argv)) {
+		return ncWavFile(in, out, weight, ratio, stats);
 	} else {
 		std::cerr << "\nUsage:\n\t" << argv[0]
 			<< " -i input.wav -o output.wav -w weightFile" << std::endl;
