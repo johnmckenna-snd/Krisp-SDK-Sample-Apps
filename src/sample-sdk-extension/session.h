@@ -14,10 +14,12 @@ class Session {
 public:
 	virtual ~Session() = default;
 
-	void clean_frame_pcm16(const short * frame_10ms_in_ptr, short * frame_10ms_out_ptr) {
+	void clean_frame_pcm16(const short * frame_10ms_in_ptr,
+			short * frame_10ms_out_ptr) {
 		this->impl_clean_frame_pcm16(frame_10ms_in_ptr, frame_10ms_out_ptr);
 	}
-	void clean_frame_float(const float * frame_10ms_in_ptr, float * frame_10ms_out_ptr) {
+	void clean_frame_float(const float * frame_10ms_in_ptr,
+			float * frame_10ms_out_ptr) {
 		this->impl_clean_frame_float(frame_10ms_in_ptr, frame_10ms_out_ptr);
 	}
 private:

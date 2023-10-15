@@ -1,5 +1,10 @@
 #include "model.h"
 
+#include <krisp-audio-sdk.hpp>
+
+
+namespace KrispAudioSDK {
+
 
 Model::Model() : m_given_name(), m_loaded(false)
 {
@@ -12,12 +17,17 @@ Model::~Model()
 
 bool Model::load(const std::wstring & path, const std::string & given_name)
 {
+	if (m_loaded) {
+		return false;
+	}
+
 	int result = krispAudioSetModel(path.c_str(), given_name.c_str());
 	if (result != 0) {
 		return false;
 	}
 	m_loaded = true;
 	m_given_name = given_name;
+	return true;
 }
 
 bool Model::unload()
@@ -40,4 +50,6 @@ std::string Model::get_given_name() const {
 
 bool Model::is_loaded() const {
 	return m_loaded;
+}
+
 }

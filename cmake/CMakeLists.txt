@@ -13,7 +13,7 @@ get_filename_component(ROOT_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${ROOT_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${ROOT_DIR}/bin)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # is needed to get ${LIBSNDFILE_ABSPATH} and ${LIBSNDFILE_INC}
@@ -28,6 +28,7 @@ include(libresample.cmake)
 set(APPNAME_NC sample-nc)
 set(DLLNAME krisp-dll)
 set(APPNAME_DLL dll-test-app)
+set(APPNAME_SDK_EXT sample-sdk-ext)
 #set(APPNAME_VAD sample-vad)
 
 add_compile_definitions(KRISP_AUDIO_STATIC)
@@ -43,6 +44,17 @@ add_library(
 add_executable(
 	${APPNAME_DLL}
 	${ROOT_DIR}/src/sample-dll/dll-test.cpp
+)
+
+add_executable(
+	${APPNAME_SDK_EXT}
+	${ROOT_DIR}/src/sample-sdk-extension/main.cpp
+	${ROOT_DIR}/src/sample-sdk-extension/bvc_device_manager.cpp
+	${ROOT_DIR}/src/sample-sdk-extension/device_list.cpp
+	${ROOT_DIR}/src/sample-sdk-extension/model.cpp
+	${ROOT_DIR}/src/sample-sdk-extension/session_nc.cpp
+	${ROOT_DIR}/src/sample-sdk-extension/session_factory.cpp
+	${ROOT_DIR}/src/sample-sdk-extension/outbound_session_factory.cpp
 )
 
 add_executable(
@@ -72,6 +84,12 @@ target_include_directories(
 	$ENV{KRISP_INC}
 )
 
+target_include_directories(
+	${APPNAME_SDK_EXT}
+	PRIVATE
+	$ENV{KRISP_INC}
+)
+
 target_link_libraries(
 	${APPNAME_NC}
 	${LIBSNDFILE_ABSPATH}
@@ -88,6 +106,13 @@ target_link_libraries(
 target_link_libraries(
 	${APPNAME_DLL}
 	${DLLNAME}
+)
+
+target_link_libraries(
+	${APPNAME_SDK_EXT}
+	${LIBSNDFILE_ABSPATH}
+	${LIBKRISP_ABSPATH}
+	${LIBRESAMPLE_ABSPATH}
 )
 
 # Blas libraries are applied to ${APPNAME_NC} target

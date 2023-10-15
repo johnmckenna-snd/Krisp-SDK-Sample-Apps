@@ -3,7 +3,9 @@
 #include <string>
 
 
-class final Model {
+namespace KrispAudioSDK {
+
+class Model {
 public:
 	Model();
 	~Model();
@@ -15,3 +17,5 @@ private:
 	std::string m_given_name;
 	bool m_loaded;
 };
+
+}

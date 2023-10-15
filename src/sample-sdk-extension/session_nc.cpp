@@ -4,13 +4,43 @@
 #include <krisp-audio-sdk-nc.hpp>
 
 
-SessionNC::SessionNC() : m_krisp_session_id(nullptr), m_frame_size(0)
+namespace KrispAudioSDK {
+
+SessionNC::SessionNC()
+	: m_model_ptr(), m_krisp_session_id(nullptr), m_frame_size(0)
 {
 }
 
-SessionNC::SessionNC(KrispAudioSessionID session_id, unsigned long frame_size) 
-	: m_krisp_session_id(session_id), m_frame_size(frame_size)
+//SessionNC::SessionNC(const SessionNC & copy)
+//	: m_model_ptr(), m_krisp_session_id(nullptr), m_frame_size(0)
+//{
+//}
+
+SessionNC::SessionNC(const std::shared_ptr<Model> & model_ptr,
+		KrispAudioSessionID session_id, unsigned long frame_size) :
+	m_model_ptr(model_ptr),
+	m_krisp_session_id(session_id),
+	m_frame_size(frame_size)
 {
+}
+
+SessionNC::SessionNC(SessionNC && copy)
+	: m_model_ptr(), m_krisp_session_id(nullptr), m_frame_size(0)
+{
+	m_model_ptr = std::move(copy.m_model_ptr);
+	m_krisp_session_id = copy.m_krisp_session_id;
+	m_frame_size = copy.m_frame_size;
+	copy.m_krisp_session_id = nullptr;
+	copy.m_frame_size = 0;
+}
+
+SessionNC & SessionNC::operator = (SessionNC && copy)
+{
+	m_model_ptr = std::move(copy.m_model_ptr);
+	m_krisp_session_id = copy.m_krisp_session_id;
+	m_frame_size = copy.m_frame_size;
+	copy.m_krisp_session_id = nullptr;
+	copy.m_frame_size = 0;
 }
 
 SessionNC::~SessionNC()
@@ -53,4 +83,6 @@ bool SessionNC::impl_clean_frame_float(const float *frame_in, float *frame_out)
 	}
 	// TODO: error handling
 	return false;
+}
+
 }
