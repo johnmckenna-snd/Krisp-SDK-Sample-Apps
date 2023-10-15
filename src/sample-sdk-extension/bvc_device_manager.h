@@ -3,6 +3,8 @@
 #include "device_list.h"
 
 
+namespace KrispAudioSDK {
+
 class BVCDeviceManager {
 public:
 	BVCDeviceManager();
@@ -21,3 +23,5 @@ private:
 	DeviceList m_block_list;
 	bool m_enforce_bvc;
 };
+
+}

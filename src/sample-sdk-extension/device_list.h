@@ -4,6 +4,8 @@
 #include <set>
 
 
+namespace KrispAudioSDK {
+
 class DeviceList {
 public:
 	bool load_from_file(const std::string & path);
@@ -19,3 +21,5 @@ private:
 	std::string m_file_path;
 	std::set<std::string> m_devices;
 };
+
+}

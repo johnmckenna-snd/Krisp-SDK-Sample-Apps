@@ -1,6 +1,8 @@
 #include "bvc_device_manager.h"
 
 
+namespace KrispAudioSDK {
+
 BVCDeviceManager::BVCDeviceManager() : m_errors(), m_allow_list(),
 	m_block_list(), m_enforce_bvc(false)
 {
@@ -85,4 +87,6 @@ bool BVCDeviceManager::is_allowed(const std::string & device) const {
 void BVCDeviceManager::force_bvc(bool enforce_bvc)
 {
 	m_enforce_bvc = enforce_bvc;
+}
+
 }

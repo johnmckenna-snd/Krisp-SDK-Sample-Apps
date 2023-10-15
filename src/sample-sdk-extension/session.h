@@ -1,6 +1,8 @@
 #pragma once
 
 
+namespace KrispAudioSDK {
+
 enum SamplingRate {
 	sampling_rate_8000 = 8000,
 	sampling_rate_16000 = 16000,
@@ -26,3 +28,5 @@ private:
 	virtual bool impl_clean_frame_pcm16(const short * f_in, short * f_out) = 0;
 	virtual bool impl_clean_frame_float(const float * f_in, float * f_out) = 0;
 };
+
+}

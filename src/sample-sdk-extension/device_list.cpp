@@ -4,6 +4,8 @@
 #include <cstdio>
 
 
+namespace KrispAudioSDK {
+
 static bool write_device_set_to_file(const std::set<std::string> & devices,
 	const std::string & path, std::string * last_error_ptr)
 {
@@ -132,4 +134,6 @@ bool DeviceList::is_in_the_list(const std::string & device) const
 		return false;
 	}
 	return true;
+}
+
 }

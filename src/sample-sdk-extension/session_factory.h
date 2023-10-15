@@ -6,6 +6,8 @@
 #include "session.h"
 
 
+namespace KrispAudioSDK {
+
 class SessionFactory {
 public:
 	virtual ~SessionFactory() = default;
@@ -16,3 +18,5 @@ private:
 	virtual std::unique_ptr<Session> create_impl(
 		const std::string & device, SamplingRate r, bool try_bvc) = 0;
 };
+
+}
