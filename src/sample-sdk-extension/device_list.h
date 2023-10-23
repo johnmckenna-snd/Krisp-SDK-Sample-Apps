@@ -8,12 +8,13 @@ namespace KrispAudioSDK {
 
 class DeviceList {
 public:
+	bool create_empty_file(const std::string & path);
 	bool load_from_file(const std::string & path);
 	bool add(const std::string & device);
 	bool remove(const std::string & device);
 	bool is_in_the_list(const std::string & device) const;
-
 	bool has_error() const;
+	unsigned long count() const;
 	std::string get_last_error() const;
 	std::string pull_last_error();
 private:

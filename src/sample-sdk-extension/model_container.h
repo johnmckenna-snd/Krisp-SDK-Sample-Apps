@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <string>
 #include <memory>
 
@@ -21,17 +22,21 @@ public:
 		}
 		this->m_registered_models[id] = true;
 		this->m_models_path[id] = path;
+		this->m_models[id] = std::make_shared<Model>();
 		return true;
 	}
 
 	bool preload_model(unsigned long id) {
 		if (m_registered_models.size() == 0) {
+			assert(0);
 			return false;
 		}
 		if (id > m_registered_models.size() - 1) {
+			assert(0);
 			return false;;
 		}
 		if (m_models[id].get() == nullptr) {
+			assert(0);
 			return false;
 		}
 		auto model_ptr = std::make_shared<Model>();
@@ -43,7 +48,12 @@ public:
 			m_models[id] = model_ptr;
 			return true;
 		}
+		m_last_error = model_ptr->get_last_error();
 		return false;
+	}
+
+	const std::string & get_last_error() const {
+		return m_last_error;
 	}
 
 	bool is_model_registered(unsigned long id) const {
@@ -84,6 +94,7 @@ private:
 	std::array<bool, TModelCount> m_registered_models = {false};
 	std::array<std::wstring, TModelCount> m_models_path;
 	std::array<std::shared_ptr<Model>, TModelCount> m_models;
+	std::string m_last_error;
 };
 
 }

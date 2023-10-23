@@ -1,12 +1,13 @@
 #include "model.h"
 
+#include <iostream>
 #include <krisp-audio-sdk.hpp>
 
 
 namespace KrispAudioSDK {
 
 
-Model::Model() : m_given_name(), m_loaded(false)
+Model::Model() : m_given_name(), m_last_error(), m_loaded(false)
 {
 }
 
@@ -18,11 +19,16 @@ Model::~Model()
 bool Model::load(const std::wstring & path, const std::string & given_name)
 {
 	if (m_loaded) {
+		m_last_error = "Please use Model::unload() first to unload the model.";
 		return false;
 	}
 
+	std::cout << "++++" << std::endl;
+	std::cout << given_name << std::endl;
+	std::wcout << path << std::endl;
 	int result = krispAudioSetModel(path.c_str(), given_name.c_str());
 	if (result != 0) {
+		m_last_error = "Failed to load the model";
 		return false;
 	}
 	m_loaded = true;
@@ -50,6 +56,10 @@ std::string Model::get_given_name() const {
 
 bool Model::is_loaded() const {
 	return m_loaded;
+}
+
+const std::string & Model::get_last_error() const {
+	return m_last_error;
 }
 
 }

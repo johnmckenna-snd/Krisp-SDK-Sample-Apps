@@ -12,6 +12,9 @@
 
 namespace KrispAudioSDK {
 
+bool InitLibrary();
+bool UnloadLibraryResources();
+
 
 class OutboundSessionFactory : public SessionFactory {
 public:
@@ -25,12 +28,14 @@ public:
 		const std::string & block_list_path);
 	bool register_model(const std::wstring & path, ModelId id);
 	bool preload_model(ModelId id);
+	const std::string & get_last_error() const;
 private:
 	ModelContainer<4> m_model_container;
 	BVCDeviceManager m_device_manager;
+	std::string m_last_error;
+
 	std::unique_ptr<Session> create_impl(
 		const std::string & device, SamplingRate r, bool try_bvc);
-
 
 	std::shared_ptr<Model> choose_model(
 		const std::string & device, SamplingRate r, bool try_bvc);

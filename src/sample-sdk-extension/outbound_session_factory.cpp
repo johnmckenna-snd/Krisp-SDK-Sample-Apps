@@ -12,6 +12,35 @@
 namespace KrispAudioSDK {
 
 
+bool krispInitialized = false;
+
+
+bool InitLibrary() {
+	if (krispInitialized) {
+		return false;
+	}
+	int result = krispAudioGlobalInit(L"");
+	if (result != 0) {
+		return false;
+	}
+	krispInitialized = true;
+	return true;
+}
+
+bool UnloadLibraryResources() {
+	if (!krispInitialized) {
+		return false;
+	}
+
+	int result = krispAudioGlobalDestroy();
+	if (result != 0) {
+		return false;
+	}
+	krispInitialized = false;
+	return true;
+}
+
+
 bool OutboundSessionFactory::register_model(const std::wstring & path, ModelId id)
 {
 	return m_model_container.register_model(path, id);
@@ -19,7 +48,11 @@ bool OutboundSessionFactory::register_model(const std::wstring & path, ModelId i
 
 bool OutboundSessionFactory::preload_model(ModelId id)
 {
-	return m_model_container.preload_model(id);
+	if (m_model_container.preload_model(id)) {
+		return true;
+	}
+	m_last_error = m_model_container.get_last_error();
+	return false;
 }
 
 bool OutboundSessionFactory::load_device_lists(
@@ -29,6 +62,9 @@ bool OutboundSessionFactory::load_device_lists(
 	return m_device_manager.load_lists(allow_list_path, block_list_path);
 }
 
+const std::string & OutboundSessionFactory::get_last_error() const {
+	return m_last_error;
+}
 
 std::shared_ptr<Model> OutboundSessionFactory::choose_model(
 	const std::string & device, SamplingRate r, bool try_bvc)

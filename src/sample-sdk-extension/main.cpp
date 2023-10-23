@@ -4,6 +4,8 @@
 #include "bvc_device_manager.h"
 #include "outbound_session_factory.h"
 
+#include "unit_test_device_list.h"
+
 
 using KrispAudioSDK::SamplingRate;
 using KrispAudioSDK::OutboundSessionFactory;
@@ -21,7 +23,9 @@ bool test() {
 	std::wstring model_nc_32k_path = L"/Users/atatalyan/dev/krisp-sdk-builds/models/standard-small/c6.f.s.ced125.kw";
 	std::wstring model_bvc_path = L"/Users/atatalyan/dev/krisp-sdk-builds/models/standard-small/hs.c6.f.s.de56df.thw";
 
-	session_factory.register_model(model_nc_8k_path, nc_8k_id);
+	if (session_factory.register_model(model_nc_8k_path, nc_8k_id) == false) {
+		assert(0);
+	}
 	session_factory.register_model(model_nc_16k_path, nc_16k_id);
 	session_factory.register_model(model_nc_32k_path, nc_32k_id);
 	session_factory.register_model(model_bvc_path, bvc_id);
@@ -32,7 +36,7 @@ bool test() {
 		std::cout << "model pre-loaded to the memory" << std::endl;
 	}
 	else {
-		std::cerr << " failed to load the model to the memory" << std::endl;
+		std::cerr << session_factory.get_last_error() << std::endl;
 		return false;
 	}
 
@@ -50,8 +54,12 @@ bool test() {
 	return true;
 }
 
-int main() {
-	test();
 
+int main() {
+	KrispAudioSDK::InitLibrary();
+	test();
+	unit_test_device_list::test_no_file_loaded();	
+	unit_test_device_list::test_with_file_loaded();	
+	//KrispAudioSDK::UnloadLibraryResources();
 	return 0;
 }
