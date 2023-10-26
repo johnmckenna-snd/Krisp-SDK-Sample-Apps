@@ -9,31 +9,37 @@
 #include "session_nc.h"
 
 
-namespace KrispAudioSDK {
+namespace KrispAudioSDK
+{
 
 
 bool krispInitialized = false;
 
 
-bool InitLibrary() {
-	if (krispInitialized) {
+bool InitLibrary()
+{
+	if (krispInitialized)
+	{
 		return false;
 	}
 	int result = krispAudioGlobalInit(L"");
-	if (result != 0) {
+	if (result != 0)
+	{
 		return false;
 	}
 	krispInitialized = true;
 	return true;
 }
 
-bool UnloadLibraryResources() {
-	if (!krispInitialized) {
+bool UnloadLibraryResources()
+{
+	if (!krispInitialized)
+	{
 		return false;
 	}
-
 	int result = krispAudioGlobalDestroy();
-	if (result != 0) {
+	if (result != 0)
+	{
 		return false;
 	}
 	krispInitialized = false;
@@ -48,7 +54,8 @@ bool OutboundSessionFactory::register_model(const std::wstring & path, ModelId i
 
 bool OutboundSessionFactory::preload_model(ModelId id)
 {
-	if (m_model_container.preload_model(id)) {
+	if (m_model_container.preload_model(id))
+	{
 		return true;
 	}
 	m_last_error = m_model_container.get_last_error();
@@ -62,42 +69,49 @@ bool OutboundSessionFactory::load_device_lists(
 	return m_device_manager.load_lists(allow_list_path, block_list_path);
 }
 
-const std::string & OutboundSessionFactory::get_last_error() const {
+const std::string & OutboundSessionFactory::get_last_error() const
+{
 	return m_last_error;
 }
 
 std::shared_ptr<Model> OutboundSessionFactory::choose_model(
 	const std::string & device, SamplingRate r, bool try_bvc)
 {
-	if (r == SamplingRate::sampling_rate_8000) {
-		if (m_model_container.is_model_registered(ModelId::nc_8k)) {
+	if (r == SamplingRate::sampling_rate_8000)
+	{
+		if (m_model_container.is_model_registered(ModelId::nc_8k))
+		{
 			return m_model_container.get_model(ModelId::nc_8k);
 		}
-		else {
-			if (m_model_container.is_model_registered(ModelId::nc_16k)) {
+		else
+		{
+			if (m_model_container.is_model_registered(ModelId::nc_16k))
+			{
 				return m_model_container.get_model(ModelId::nc_16k);
 			}
-			else {
+			else
+			{
 				return std::make_shared<Model>();
 			}
 		}
 	}
-
-	if (try_bvc && m_device_manager.is_allowed(device)) {
+	if (try_bvc && m_device_manager.is_allowed(device))
+	{
 		return m_model_container.get_model(ModelId::bvc);
 	}
-
-	if (r == SamplingRate::sampling_rate_16000) {
-		if (m_model_container.is_model_registered(ModelId::nc_16k)) {
+	if (r == SamplingRate::sampling_rate_16000)
+	{
+		if (m_model_container.is_model_registered(ModelId::nc_16k))
+		{
 			m_model_container.get_model(ModelId::nc_16k);
 		}
 	}
-
 	if (r == SamplingRate::sampling_rate_32000 ||
 		r == SamplingRate::sampling_rate_44100 ||
 		r == SamplingRate::sampling_rate_48000)
 	{
-		if (m_model_container.is_model_registered(ModelId::nc_32k)) {
+		if (m_model_container.is_model_registered(ModelId::nc_32k))
+		{
 			m_model_container.get_model(ModelId::nc_32k);
 		}
 	}
@@ -109,7 +123,8 @@ std::unique_ptr<Session> OutboundSessionFactory::create_impl(
 	const std::string & device, SamplingRate r, bool try_bvc)
 {
 	auto model_ptr = this->choose_model(device, r, try_bvc);
-	if (model_ptr.get() == nullptr) {
+	if (model_ptr.get() == nullptr)
+	{
 		return std::make_unique<SessionNC>();
 	}
 	std::string model_alias = model_ptr->get_given_name();
