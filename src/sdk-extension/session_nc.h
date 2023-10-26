@@ -10,6 +10,7 @@
 
 namespace KrispAudioSDK {
 
+
 class SessionNC : public Session {
 public:
 	SessionNC();

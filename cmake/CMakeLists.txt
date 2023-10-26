@@ -28,7 +28,7 @@ include(libresample.cmake)
 set(APPNAME_NC sample-nc)
 set(DLLNAME krisp-dll)
 set(APPNAME_DLL dll-test-app)
-set(APPNAME_SDK_EXT sample-sdk-ext)
+set(APPNAME_SDK_EXT_TEST test-sdk-ext)
 #set(APPNAME_VAD sample-vad)
 
 add_compile_definitions(KRISP_AUDIO_STATIC)
@@ -47,14 +47,14 @@ add_executable(
 )
 
 add_executable(
-	${APPNAME_SDK_EXT}
-	${ROOT_DIR}/src/sample-sdk-extension/main.cpp
-	${ROOT_DIR}/src/sample-sdk-extension/bvc_device_manager.cpp
-	${ROOT_DIR}/src/sample-sdk-extension/device_list.cpp
-	${ROOT_DIR}/src/sample-sdk-extension/model.cpp
-	${ROOT_DIR}/src/sample-sdk-extension/session_nc.cpp
-	${ROOT_DIR}/src/sample-sdk-extension/session_factory.cpp
-	${ROOT_DIR}/src/sample-sdk-extension/outbound_session_factory.cpp
+	${APPNAME_SDK_EXT_TEST}
+	${ROOT_DIR}/src/sdk-extension/bvc_device_manager.cpp
+	${ROOT_DIR}/src/sdk-extension/device_list.cpp
+	${ROOT_DIR}/src/sdk-extension/model.cpp
+	${ROOT_DIR}/src/sdk-extension/session_nc.cpp
+	${ROOT_DIR}/src/sdk-extension/session_factory.cpp
+	${ROOT_DIR}/src/sdk-extension/outbound_session_factory.cpp
+	${ROOT_DIR}/src/sdk-extension-test/unit_test_device_list.cpp
 )
 
 add_executable(
@@ -62,6 +62,12 @@ add_executable(
 	${ROOT_DIR}/src/sample-nc/main.cpp
 	${ROOT_DIR}/src/utils/sound_file.cpp
 	${ROOT_DIR}/src/utils/argument_parser.cpp
+)
+
+target_compile_definitions(
+	${APPNAME_SDK_EXT_TEST}
+	PRIVATE
+	TEST_DATA_DIR="${ROOT_DIR}/src/sdk-extension-test/data"
 )
 
 target_include_directories(
@@ -85,10 +91,13 @@ target_include_directories(
 )
 
 target_include_directories(
-	${APPNAME_SDK_EXT}
+	${APPNAME_SDK_EXT_TEST}
 	PRIVATE
+	${ROOT_DIR}/src/sdk-extension
+	${ROOT_DIR}/googletest/googletest/include
 	$ENV{KRISP_INC}
 )
+
 
 target_link_libraries(
 	${APPNAME_NC}
@@ -108,11 +117,24 @@ target_link_libraries(
 	${DLLNAME}
 )
 
+find_library(
+	LIBGTEST_ABSPATH
+	NAMES gtest
+	PATHS ${ROOT_DIR}/build-googletest/lib
+)
+
+find_library(
+	LIBGTEST_MAIN_ABSPATH
+	NAMES gtest_main
+	PATHS ${ROOT_DIR}/build-googletest/lib
+)
+
 target_link_libraries(
-	${APPNAME_SDK_EXT}
-	${LIBSNDFILE_ABSPATH}
+	${APPNAME_SDK_EXT_TEST}
 	${LIBKRISP_ABSPATH}
 	${LIBRESAMPLE_ABSPATH}
+	${LIBGTEST_ABSPATH}
+	${LIBGTEST_MAIN_ABSPATH}
 )
 
 # Blas libraries are applied to ${APPNAME_NC} target

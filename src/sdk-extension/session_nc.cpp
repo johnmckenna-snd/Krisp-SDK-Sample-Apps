@@ -41,6 +41,7 @@ SessionNC & SessionNC::operator = (SessionNC && copy)
 	m_frame_size = copy.m_frame_size;
 	copy.m_krisp_session_id = nullptr;
 	copy.m_frame_size = 0;
+	return *this;
 }
 
 SessionNC::~SessionNC()

@@ -5,6 +5,7 @@
 
 namespace KrispAudioSDK {
 
+
 class BVCDeviceManager {
 public:
 	BVCDeviceManager();

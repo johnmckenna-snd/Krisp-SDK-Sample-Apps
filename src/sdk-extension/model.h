@@ -5,6 +5,7 @@
 
 namespace KrispAudioSDK {
 
+
 class Model {
 public:
 	Model();

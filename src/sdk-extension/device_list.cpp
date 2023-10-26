@@ -116,35 +116,33 @@ bool DeviceList::load_from_file(const std::string & path)
 	this->m_file_path = path;
 	this->m_devices.clear();
 	std::FILE * file = std::fopen(path.c_str(), "r");
-	if (file == NULL)
+	if (file == nullptr)
 	{
 		m_last_error = "ERROR opening " + path + " file. "
 			+ std::strerror(errno) + ".";
 		return false;
 	}
-	char * line {NULL};
-	size_t len {0};
-	while (::getline(&line, &len, file) != 1)
+	char * line = nullptr;
+	size_t len = 0;
+	while (::getline(&line, &len, file) != -1)
 	{
-		bool word_found{false};
-		for (char * ptr = line; *ptr != 0; ++ptr) {
-			if (std::isalnum(*ptr)) {
+		bool word_found = false;
+		for (char * ptr = line; *ptr != 0; ++ptr)
+		{
+			if (std::isalnum(*ptr))
+			{
 				word_found = true;
 				break;
 			}
 		}
 		if (word_found)
 		{
-			std::cout << "DEV: '" << line << "'" << std::endl;
-			if (line[std::strlen(line) - 1] == "\n")
+			size_t word_length = std::strlen(line);
+			if (line[word_length - 1] == '\n')
 			{
-				line[std::strlen(line) - 1] == "\n";
+				--word_length;
 			}
-			m_devices.insert(std::string(line));
-		}
-		if(::feof(file))
-		{
-			break;
+			m_devices.insert(std::string(line, word_length));
 		}
 	}
 	::free(line);
