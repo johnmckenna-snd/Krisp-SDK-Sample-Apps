@@ -47,9 +47,9 @@ bool UnloadLibraryResources()
 }
 
 
-bool OutboundSessionFactory::register_model(const std::wstring & path, ModelId id)
+bool OutboundSessionFactory::register_model(ModelId id, const std::wstring & path)
 {
-	return m_model_container.register_model(path, id);
+	return m_model_container.register_model(id, path);
 }
 
 bool OutboundSessionFactory::preload_model(ModelId id)
@@ -74,6 +74,7 @@ const std::string & OutboundSessionFactory::get_last_error() const
 	return m_last_error;
 }
 
+// TODO: what if user needs only BVC and we need to raise error if that won't happen
 std::shared_ptr<Model> OutboundSessionFactory::choose_model(
 	const std::string & device, SamplingRate r, bool try_bvc)
 {
@@ -91,11 +92,13 @@ std::shared_ptr<Model> OutboundSessionFactory::choose_model(
 			}
 			else
 			{
+				// TODO: report error
 				return std::make_shared<Model>();
 			}
 		}
 	}
-	if (try_bvc && m_device_manager.is_allowed(device))
+	if (try_bvc && m_device_manager.is_allowed(device) &&
+		m_model_container.is_model_registered(ModelId::bvc))
 	{
 		return m_model_container.get_model(ModelId::bvc);
 	}
@@ -103,16 +106,17 @@ std::shared_ptr<Model> OutboundSessionFactory::choose_model(
 	{
 		if (m_model_container.is_model_registered(ModelId::nc_16k))
 		{
-			m_model_container.get_model(ModelId::nc_16k);
+			return m_model_container.get_model(ModelId::nc_16k);
 		}
 	}
-	if (r == SamplingRate::sampling_rate_32000 ||
+	if (r == SamplingRate::sampling_rate_16000 ||
+		r == SamplingRate::sampling_rate_32000 ||
 		r == SamplingRate::sampling_rate_44100 ||
 		r == SamplingRate::sampling_rate_48000)
 	{
 		if (m_model_container.is_model_registered(ModelId::nc_32k))
 		{
-			m_model_container.get_model(ModelId::nc_32k);
+			return m_model_container.get_model(ModelId::nc_32k);
 		}
 	}
 

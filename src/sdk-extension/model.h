@@ -11,6 +11,7 @@ public:
 	Model();
 	~Model();
 	bool load(const std::wstring & path, const std::string & given_name);
+	bool load(void * blob_ptr, const std::string & given_name);
 	bool unload();
 	std::string get_given_name() const;
 	bool is_loaded() const;

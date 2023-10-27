@@ -8,10 +8,12 @@
 #include "model.h"
 
 
-namespace KrispAudioSDK {
+namespace KrispAudioSDK
+{
 
 
-class SessionNC : public Session {
+class SessionNC : public Session
+{
 public:
 	SessionNC();
 	SessionNC(const std::shared_ptr<Model> & model_ptr,

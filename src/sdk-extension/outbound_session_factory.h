@@ -10,15 +10,18 @@
 #include "bvc_device_manager.h"
 
 
-namespace KrispAudioSDK {
+namespace KrispAudioSDK
+{
 
 bool InitLibrary();
 bool UnloadLibraryResources();
 
 
-class OutboundSessionFactory : public SessionFactory {
+class OutboundSessionFactory : public SessionFactory
+{
 public:
-	enum ModelId {
+	enum ModelId
+	{
 		nc_8k = 0,
 		nc_16k = 1,
 		nc_32k = 2,
@@ -26,7 +29,10 @@ public:
 	};
 	bool load_device_lists(const std::string & allow_list_path,
 		const std::string & block_list_path);
-	bool register_model(const std::wstring & path, ModelId id);
+	bool register_model(ModelId id, void * blob_ptr);
+	bool register_model(ModelId id, const std::wstring & path);
+	bool register_model_directory(const std::wstring & path);
+
 	bool preload_model(ModelId id);
 	const std::string & get_last_error() const;
 private:

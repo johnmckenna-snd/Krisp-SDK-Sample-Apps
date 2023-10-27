@@ -1,4 +1,6 @@
 #include <cassert>
+#include <memory>
+
 #include <krisp-audio-sdk.hpp>
 
 #include "device_list.h"
@@ -51,7 +53,6 @@ constexpr wchar_t model_bvc_32k[] = L"" PATH_JOIN(MODELS_DIR, "bvc-32k.kw");
 
 TEST(DeviceList, NoFileLoaded)
 {
-	ASSERT_TRUE(KrispAudioSDK::InitLibrary());
 	KrispAudioSDK::DeviceList dev_list;
 	std::string device_1 = "Apple Air Pods Pro 2";
 	EXPECT_FALSE(dev_list.add(device_1));
@@ -63,15 +64,12 @@ TEST(DeviceList, NoFileLoaded)
 	EXPECT_FALSE(dev_list.has_error());
 	EXPECT_FALSE(dev_list.is_in_the_list(device_1));
 	EXPECT_FALSE(dev_list.has_error());
-	ASSERT_TRUE(KrispAudioSDK::UnloadLibraryResources());
 }
-
 
 constexpr char air_pods_pro_2[] = "  Apple Air Pods Pro 2 ";
 
 TEST(DeviceList, WithFileLoaded)
 {
-	ASSERT_TRUE(KrispAudioSDK::InitLibrary());
 	{
 		KrispAudioSDK::DeviceList dev_list;
 		EXPECT_TRUE(dev_list.create_empty_file(block_list_path))
@@ -121,26 +119,34 @@ TEST(DeviceList, WithFileLoaded)
 	EXPECT_FALSE(dev_list.has_error());
 	EXPECT_TRUE(dev_list.load_from_file(allow_list_path));
 	EXPECT_EQ(dev_list.count(), 2);
-	ASSERT_TRUE(KrispAudioSDK::UnloadLibraryResources());
 }
 
 TEST(DeviceList, BadList)
 {
-	ASSERT_TRUE(KrispAudioSDK::InitLibrary());
 	KrispAudioSDK::DeviceList dev_list;
 	std::string device_in_the_list = air_pods_pro_2;
 	EXPECT_TRUE(dev_list.load_from_file(bad_list_path)) 
 		<< dev_list.get_last_error();
-	//for (auto d : dev_list.get_container_ref())
-	//{
-	//}
 	EXPECT_EQ(dev_list.count(), 6);
-	ASSERT_TRUE(KrispAudioSDK::UnloadLibraryResources());
 }
 
-TEST(Model, Loading)
+class Test : public ::testing::Test
 {
-	ASSERT_TRUE(KrispAudioSDK::InitLibrary());
+protected:
+	void SetUp() override
+	{
+		KrispAudioSDK::InitLibrary();
+	}
+
+	void TearDown() override
+	{
+		KrispAudioSDK::UnloadLibraryResources();
+	}
+};
+
+
+TEST_F(Test, Model)
+{
 	KrispAudioSDK::Model model;
 	const char given_name[] = "any name";
 	const char another_name[] = "another name";
@@ -163,34 +169,80 @@ TEST(Model, Loading)
 	EXPECT_EQ(model.get_last_error().size(), 0);
 	EXPECT_TRUE(model.unload());
 	EXPECT_FALSE(model.is_loaded());
+}
+
+TEST_F(Test, ModelContainer)
+{
+	const unsigned model_count = 3;
+	std::array<const wchar_t *, model_count> models_path =
+		{model_nc_8k, model_nc_16k, model_nc_32k};
+	KrispAudioSDK::ModelContainer<model_count> container;
+	EXPECT_EQ(container.get_model_count(), model_count);
+	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	{
+		EXPECT_FALSE(container.is_model_registered(id));
+	}
+	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	{
+		EXPECT_TRUE(container.register_model(id, models_path[id]));
+	}
+	EXPECT_FALSE(container.register_model(3, model_bvc_32k));
+	EXPECT_TRUE(container.has_error());
+	EXPECT_GT(container.pull_last_error().size(), 0);
+	EXPECT_FALSE(container.has_error());
+	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	{
+		EXPECT_TRUE(container.is_model_registered(id));
+	}
+	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	{
+		EXPECT_TRUE(container.preload_model(id));
+	}
+	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	{
+		auto model_shared_ptr = container.get_model(id);
+		EXPECT_NE(model_shared_ptr.get(), nullptr);
+		EXPECT_EQ(model_shared_ptr.use_count(), 2);
+	}
+	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	{
+		EXPECT_TRUE(container.disable_model_ownership(id));
+	}
+	{
+		std::array<std::shared_ptr<KrispAudioSDK::Model>, model_count> models;
+		for (unsigned id = 0; id < container.get_model_count(); ++id)
+		{
+			auto model_shared_ptr = container.get_model(id);
+			EXPECT_NE(model_shared_ptr.get(), nullptr);
+			EXPECT_EQ(model_shared_ptr.use_count(), 1);
+			models[id] = model_shared_ptr;
+		}
+		for (unsigned id = 0; id < container.get_model_count(); ++id)
+		{
+			auto model_shared_ptr = container.get_model(id);
+			EXPECT_NE(model_shared_ptr.get(), nullptr);
+			EXPECT_EQ(model_shared_ptr.use_count(), 2);
+		}
+	}
+	{
+		for (unsigned id = 0; id < container.get_model_count(); ++id)
+		{
+			auto model_shared_ptr = container.get_model(id);
+			EXPECT_NE(model_shared_ptr.get(), nullptr);
+			EXPECT_EQ(model_shared_ptr.use_count(), 1);
+		}
+	}
+	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	{
+		EXPECT_TRUE(container.enable_model_ownership(id));
+	}
+}
+
+TEST(OutboundSessionFactory, Sample)
+{
+	ASSERT_TRUE(KrispAudioSDK::InitLibrary());
 	ASSERT_TRUE(KrispAudioSDK::UnloadLibraryResources());
 }
 
-TEST(ModelContainer, Sample)
-{
-	ASSERT_TRUE(KrispAudioSDK::InitLibrary());
-	{
-		constexpr unsigned model_count = 3;
-		KrispAudioSDK::ModelContainer<model_count> container;
-		EXPECT_EQ(container.get_model_count(), model_count);
-		for (unsigned id = 0; id < container.get_model_count(); ++id)
-		{
-			EXPECT_FALSE(container.is_model_registered(id));
-		}
-		for (unsigned id = 0; id < container.get_model_count(); ++id)
-		{
-			EXPECT_TRUE(container.register_model(model_nc_8k, id));
-		}
-		for (unsigned id = 0; id < container.get_model_count(); ++id)
-		{
-			EXPECT_TRUE(container.is_model_registered(id));
-		}
-		for (unsigned id = 0; id < container.get_model_count(); ++id)
-		{
-			EXPECT_TRUE(container.preload_model(id));
-		}
-	}
-	ASSERT_TRUE(KrispAudioSDK::UnloadLibraryResources());
-}
 
 }

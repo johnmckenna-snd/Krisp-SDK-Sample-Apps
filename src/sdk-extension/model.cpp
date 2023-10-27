@@ -4,7 +4,8 @@
 #include <krisp-audio-sdk.hpp>
 
 
-namespace KrispAudioSDK {
+namespace KrispAudioSDK
+{
 
 
 Model::Model() : m_given_name(), m_last_error(), m_loaded(false)
