@@ -51,9 +51,9 @@ add_executable(
 	${ROOT_DIR}/src/sdk-extension/bvc_device_manager.cpp
 	${ROOT_DIR}/src/sdk-extension/device_list.cpp
 	${ROOT_DIR}/src/sdk-extension/model.cpp
-	${ROOT_DIR}/src/sdk-extension/session_nc.cpp
-	${ROOT_DIR}/src/sdk-extension/session_factory.cpp
-	${ROOT_DIR}/src/sdk-extension/outbound_session_factory.cpp
+	${ROOT_DIR}/src/sdk-extension/frame_cleaner.cpp
+	${ROOT_DIR}/src/sdk-extension/frame_processor_factory.cpp
+	${ROOT_DIR}/src/sdk-extension/mic_frame_cleaner_factory.cpp
 	${ROOT_DIR}/src/sdk-extension-test/unit_test_device_list.cpp
 )
 

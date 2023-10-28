@@ -3,10 +3,12 @@
 #include <string>
 
 
-namespace KrispAudioSDK {
+namespace KrispAudioSDK
+{
 
 
-class Model {
+class Model
+{
 public:
 	Model();
 	~Model();

@@ -39,6 +39,19 @@ public:
 		return true;
 	}
 
+	bool unregister_model(unsigned long id)
+	{
+		if (id > TModelCount - 1)
+		{
+			m_last_error = "model id is out of range";
+			return false;;
+		}
+		m_models_data[id].m_path.clear();
+		m_models_data[id].m_blob_addr = nullptr;
+		m_models_data[id].m_blob_size = 0;
+		return true;
+	}
+
 	bool is_model_registered(unsigned long id)
 	{
 		if (id > TModelCount - 1)

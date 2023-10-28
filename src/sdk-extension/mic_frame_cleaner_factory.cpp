@@ -1,4 +1,4 @@
-#include "outbound_session_factory.h"
+#include "mic_frame_cleaner_factory.h"
 
 #include <memory>
 
@@ -6,7 +6,7 @@
 #include <krisp-audio-sdk-nc.hpp>
 
 #include "model.h"
-#include "session_nc.h"
+#include "frame_cleaner.h"
 
 
 namespace KrispAudioSDK
@@ -47,12 +47,13 @@ bool UnloadLibraryResources()
 }
 
 
-bool OutboundSessionFactory::register_model(ModelId id, const std::wstring & path)
+bool MicFrameCleanerFactory::register_model(ModelId id,
+	const std::wstring & path)
 {
 	return m_model_container.register_model(id, path);
 }
 
-bool OutboundSessionFactory::preload_model(ModelId id)
+bool MicFrameCleanerFactory::preload_model(ModelId id)
 {
 	if (m_model_container.preload_model(id))
 	{
@@ -62,20 +63,33 @@ bool OutboundSessionFactory::preload_model(ModelId id)
 	return false;
 }
 
-bool OutboundSessionFactory::load_device_lists(
+bool MicFrameCleanerFactory::set_model_policy(ModelId id,
+	ModelMemoryPolicy policy_id)
+{
+	if (id >= m_model_container.get_model_count())
+	{
+		m_last_error = "model id is out of range";
+		return false;
+	}
+	switch (policy_id)
+	{
+	case ModelMemoryPolicy::keep_cached_after_load:
+		return m_model_container.enable_model_ownership(id);
+	case ModelMemoryPolicy::unload_if_not_used:
+		return m_model_container.disable_model_ownership(id);
+	}
+	m_last_error = "invalid policy id";
+	return false;
+}
+
+bool MicFrameCleanerFactory::load_device_lists(
 	const std::string & allow_list_path,
 	const std::string & block_list_path)
 {
 	return m_device_manager.load_lists(allow_list_path, block_list_path);
 }
 
-const std::string & OutboundSessionFactory::get_last_error() const
-{
-	return m_last_error;
-}
-
-// TODO: what if user needs only BVC and we need to raise error if that won't happen
-std::shared_ptr<Model> OutboundSessionFactory::choose_model(
+std::shared_ptr<Model> MicFrameCleanerFactory::choose_model(
 	const std::string & device, SamplingRate r, bool try_bvc)
 {
 	if (r == SamplingRate::sampling_rate_8000)
@@ -98,9 +112,9 @@ std::shared_ptr<Model> OutboundSessionFactory::choose_model(
 		}
 	}
 	if (try_bvc && m_device_manager.is_allowed(device) &&
-		m_model_container.is_model_registered(ModelId::bvc))
+		m_model_container.is_model_registered(ModelId::bvc_32k))
 	{
-		return m_model_container.get_model(ModelId::bvc);
+		return m_model_container.get_model(ModelId::bvc_32k);
 	}
 	if (r == SamplingRate::sampling_rate_16000)
 	{
@@ -123,13 +137,13 @@ std::shared_ptr<Model> OutboundSessionFactory::choose_model(
 	return std::make_shared<Model>();
 }
 
-std::unique_ptr<Session> OutboundSessionFactory::create_impl(
+std::unique_ptr<FrameProcessor> MicFrameCleanerFactory::create_impl(
 	const std::string & device, SamplingRate r, bool try_bvc)
 {
 	auto model_ptr = this->choose_model(device, r, try_bvc);
 	if (model_ptr.get() == nullptr)
 	{
-		return std::make_unique<SessionNC>();
+		return std::make_unique<FrameCleaner>();
 	}
 	std::string model_alias = model_ptr->get_given_name();
 	static constexpr KrispAudioFrameDuration duration =
@@ -140,7 +154,17 @@ std::unique_ptr<Session> OutboundSessionFactory::create_impl(
 		duration,
 		model_alias.c_str());
 	unsigned long frame_size = (r * duration) / 1000;
-	return std::make_unique<SessionNC>(model_ptr, session, frame_size);
+	return std::make_unique<FrameCleaner>(model_ptr, session, frame_size);
+}
+
+const std::string & MicFrameCleanerFactory::get_last_error() const
+{
+	return m_last_error;
+}
+
+bool MicFrameCleanerFactory::has_error() const
+{
+	return m_last_error.size() ? true : false;
 }
 
 }

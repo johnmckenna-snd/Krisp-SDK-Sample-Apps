@@ -3,10 +3,12 @@
 #include "device_list.h"
 
 
-namespace KrispAudioSDK {
+namespace KrispAudioSDK
+{
 
 
-class BVCDeviceManager {
+class BVCDeviceManager
+{
 public:
 	BVCDeviceManager();
 	bool load_lists(const std::string & allow_list_path,

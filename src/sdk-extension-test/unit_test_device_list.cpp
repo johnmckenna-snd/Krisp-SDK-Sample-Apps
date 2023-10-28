@@ -6,7 +6,7 @@
 #include "device_list.h"
 #include "gtest/gtest.h"
 
-#include "outbound_session_factory.h"
+#include "mic_frame_cleaner_factory.h"
 
 
 namespace
@@ -238,11 +238,27 @@ TEST_F(Test, ModelContainer)
 	}
 }
 
-TEST(OutboundSessionFactory, Sample)
+TEST_F(Test, MicFrameCleanerFactory)
 {
-	ASSERT_TRUE(KrispAudioSDK::InitLibrary());
-	ASSERT_TRUE(KrispAudioSDK::UnloadLibraryResources());
+	KrispAudioSDK::MicFrameCleanerFactory factory;
+	using ModelId = KrispAudioSDK::MicFrameCleanerFactory::ModelId;
+	using SamplingRate = KrispAudioSDK::MicFrameCleanerFactory::SamplingRate;
+	EXPECT_TRUE(factory.load_device_lists(allow_list_path, block_list_path));
+	EXPECT_FALSE(factory.has_error());
+	EXPECT_TRUE(factory.register_model(ModelId::nc_8k, model_nc_8k));
+	EXPECT_TRUE(factory.register_model(ModelId::nc_16k, model_nc_16k));
+	EXPECT_TRUE(factory.register_model(ModelId::nc_32k, model_nc_32k));
+	EXPECT_TRUE(factory.register_model(ModelId::bvc_32k, model_bvc_32k));
+	EXPECT_FALSE(factory.has_error());
+	auto frame_cleaner_ptr = factory.create("fake device",
+		SamplingRate::sampling_rate_8000, false);
+	EXPECT_FALSE(factory.has_error());
+	EXPECT_NE(frame_cleaner_ptr.get(), nullptr);
+	auto frame_cleaner_2_ptr = factory.create("fake device",
+		SamplingRate::sampling_rate_8000, false);
+	EXPECT_FALSE(factory.has_error());
+	EXPECT_NE(frame_cleaner_2_ptr.get(), nullptr);
+	EXPECT_NE(frame_cleaner_ptr.get(), frame_cleaner_2_ptr.get());
 }
-
 
 }
