@@ -6,7 +6,9 @@
 #include "device_list.h"
 #include "gtest/gtest.h"
 
+#include "model_container.h"
 #include "mic_frame_cleaner_factory.h"
+#include "model_container_impl.h"
 
 
 namespace
@@ -135,12 +137,12 @@ class Test : public ::testing::Test
 protected:
 	void SetUp() override
 	{
-		KrispAudioSDK::InitLibrary();
+		//KrispAudioSDK::InitLibrary();
 	}
 
 	void TearDown() override
 	{
-		KrispAudioSDK::UnloadLibraryResources();
+		//KrispAudioSDK::UnloadLibraryResources();
 	}
 };
 
@@ -242,7 +244,7 @@ TEST_F(Test, MicFrameCleanerFactory)
 {
 	KrispAudioSDK::MicFrameCleanerFactory factory;
 	using ModelId = KrispAudioSDK::MicFrameCleanerFactory::ModelId;
-	using SamplingRate = KrispAudioSDK::MicFrameCleanerFactory::SamplingRate;
+	using SamplingRate = KrispAudioSDK::SamplingRate;
 	EXPECT_TRUE(factory.load_device_lists(allow_list_path, block_list_path));
 	EXPECT_FALSE(factory.has_error());
 	EXPECT_TRUE(factory.register_model(ModelId::nc_8k, model_nc_8k));

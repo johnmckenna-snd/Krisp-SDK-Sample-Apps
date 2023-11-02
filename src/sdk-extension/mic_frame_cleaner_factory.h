@@ -1,10 +1,12 @@
 #pragma once
 
+
 #include "frame_processor_factory.h"
 
 #include <string>
 #include <memory>
 
+#include "library_resources.h"
 #include "model.h"
 #include "model_container.h"
 #include "bvc_device_manager.h"
@@ -12,9 +14,6 @@
 
 namespace KrispAudioSDK
 {
-
-bool InitLibrary();
-bool UnloadLibraryResources();
 
 
 /**
@@ -28,6 +27,7 @@ bool UnloadLibraryResources();
 class MicFrameCleanerFactory : public FrameProcessorFactory
 {
 public:
+	MicFrameCleanerFactory();
 	/**
 	 * The identifier of the AI model. The class knows only these 4 models.
 	 */
@@ -91,10 +91,15 @@ private:
 	ModelContainer<4> m_model_container;
 	BVCDeviceManager m_device_manager;
 	std::string m_last_error;
+	std::shared_ptr<LibraryResources> m_library_ptr;
+
 	std::unique_ptr<FrameProcessor> create_impl(
 		const std::string & device, SamplingRate r, bool try_bvc);
+	std::shared_ptr<Model> choose_model_8k();
+	std::shared_ptr<Model> choose_model_16k();
 	std::shared_ptr<Model> choose_model(
 		const std::string & device, SamplingRate r, bool try_bvc);
+	std::shared_ptr<Model> get_model(ModelId);
 };
 
 }

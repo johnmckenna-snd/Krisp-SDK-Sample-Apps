@@ -26,6 +26,7 @@ include(krisp.cmake)
 include(libresample.cmake)
 
 set(APPNAME_NC sample-nc)
+set(APPNAME_SDK_EXT sample-sdk-ext)
 set(DLLNAME krisp-dll)
 set(APPNAME_DLL dll-test-app)
 set(APPNAME_SDK_EXT_TEST test-sdk-ext)
@@ -48,6 +49,7 @@ add_executable(
 
 add_executable(
 	${APPNAME_SDK_EXT_TEST}
+	${ROOT_DIR}/src/sdk-extension/library_resources.cpp
 	${ROOT_DIR}/src/sdk-extension/bvc_device_manager.cpp
 	${ROOT_DIR}/src/sdk-extension/device_list.cpp
 	${ROOT_DIR}/src/sdk-extension/model.cpp
@@ -64,8 +66,29 @@ add_executable(
 	${ROOT_DIR}/src/utils/argument_parser.cpp
 )
 
+add_executable(
+	${APPNAME_SDK_EXT} 
+	${ROOT_DIR}/src/sample-sdk-extension/main.cpp
+	${ROOT_DIR}/src/sdk-extension/library_resources.cpp
+	${ROOT_DIR}/src/utils/sound_file.cpp
+	${ROOT_DIR}/src/utils/argument_parser.cpp
+	${ROOT_DIR}/src/sdk-extension/bvc_device_manager.cpp
+	${ROOT_DIR}/src/sdk-extension/device_list.cpp
+	${ROOT_DIR}/src/sdk-extension/model.cpp
+	${ROOT_DIR}/src/sdk-extension/helper.cpp
+	${ROOT_DIR}/src/sdk-extension/frame_cleaner.cpp
+	${ROOT_DIR}/src/sdk-extension/frame_processor_factory.cpp
+	${ROOT_DIR}/src/sdk-extension/mic_frame_cleaner_factory.cpp
+)
+
 target_compile_definitions(
 	${APPNAME_SDK_EXT_TEST}
+	PRIVATE
+	TEST_DATA_DIR="${ROOT_DIR}/src/sdk-extension-test/data"
+)
+
+target_compile_definitions(
+	${APPNAME_SDK_EXT}
 	PRIVATE
 	TEST_DATA_DIR="${ROOT_DIR}/src/sdk-extension-test/data"
 )
@@ -74,6 +97,15 @@ target_include_directories(
 	${APPNAME_NC}
 	PRIVATE
 	${ROOT_DIR}/src/utils
+	${LIBSNDFILE_INC}
+	$ENV{KRISP_INC}
+)
+
+target_include_directories(
+	${APPNAME_SDK_EXT}
+	PRIVATE
+	${ROOT_DIR}/src/utils
+	${ROOT_DIR}/src/sdk-extension
 	${LIBSNDFILE_INC}
 	$ENV{KRISP_INC}
 )
@@ -93,14 +125,21 @@ target_include_directories(
 target_include_directories(
 	${APPNAME_SDK_EXT_TEST}
 	PRIVATE
-	${ROOT_DIR}/src/sdk-extension
+	./
 	${ROOT_DIR}/googletest/googletest/include
+	${ROOT_DIR}/src/sdk-extension
 	$ENV{KRISP_INC}
 )
 
-
 target_link_libraries(
 	${APPNAME_NC}
+	${LIBSNDFILE_ABSPATH}
+	${LIBKRISP_ABSPATH}
+	${LIBRESAMPLE_ABSPATH}
+)
+
+target_link_libraries(
+	${APPNAME_SDK_EXT}
 	${LIBSNDFILE_ABSPATH}
 	${LIBKRISP_ABSPATH}
 	${LIBRESAMPLE_ABSPATH}
@@ -138,4 +177,7 @@ target_link_libraries(
 )
 
 # Blas libraries are applied to ${APPNAME_NC} target
+# Blas libraries are applied to ${APPNAME_SDK_EXT} target
+# Blas libraries are applied to ${APPNAME_SDK_EXT_TEST} target
+# Blas libraries are applied to ${DLLNAME} target
 include(blas.cmake)
