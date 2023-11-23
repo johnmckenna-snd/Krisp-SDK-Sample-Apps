@@ -56,7 +56,7 @@ public:
 	{
 		return m_devices.size();
 	}
-	
+
 	const TContainer & get_container_ref() const
 	{
 		return m_devices;
@@ -67,18 +67,14 @@ public:
 	//size_type erase(const std::string & device);
 	//bool dump_to_file();
 
-	bool create_empty_file(const std::string & path);
-	bool load_from_file(const std::string & path);
+	void create_empty_file(const std::string & path);
+	void load_from_file(const std::string & path);
 	bool add(const std::string & device);
 	bool remove(const std::string & device);
 	bool is_in_the_list(const std::string & device) const;
-	bool has_error() const;
 	unsigned long count() const;
-	std::string get_last_error() const;
-	std::string pull_last_error();
 
 private:
-	std::string m_last_error;
 	std::string m_file_path;
 	TContainer m_devices;
 };

@@ -4,32 +4,16 @@
 namespace KrispAudioSDK
 {
 
-BVCDeviceManager::BVCDeviceManager() : m_errors(), m_allow_list(),
+BVCDeviceManager::BVCDeviceManager() : m_allow_list(),
 	m_block_list(), m_enforce_bvc(false)
 {
-	m_errors.reserve(5);
 }
 
-void BVCDeviceManager::set_error(const std::string & error)
-{
-	m_errors.push_back(error);
-}
-
-bool BVCDeviceManager::load_lists(const std::string & allow_list_path,
+void BVCDeviceManager::load_lists(const std::string & allow_list_path,
 		const std::string & block_list_path)
 {
-	bool has_error = false;
-	if (!m_allow_list.load_from_file(allow_list_path))
-	{
-		has_error = true;
-		set_error(m_allow_list.pull_last_error());
-	}
-	if (!m_block_list.load_from_file(block_list_path))
-	{
-		has_error = true;
-		set_error(m_block_list.pull_last_error());
-	}
-	return !has_error;
+	m_allow_list.load_from_file(allow_list_path);
+	m_block_list.load_from_file(block_list_path);
 }
 
 bool BVCDeviceManager::allow_device(const std::string & device)
@@ -38,7 +22,6 @@ bool BVCDeviceManager::allow_device(const std::string & device)
 	{
 		return true;
 	}
-	set_error(m_allow_list.pull_last_error());
 	return false;
 }
 
@@ -48,7 +31,6 @@ bool BVCDeviceManager::block_device(const std::string & device)
 	{
 		return true;
 	}
-	set_error(m_block_list.pull_last_error());
 	return false;
 }
 
@@ -57,11 +39,9 @@ bool BVCDeviceManager::remove_device(const std::string & device)
 	bool error = false;
 	if (!m_allow_list.remove(device)) {
 		error = true;
-		set_error(m_allow_list.pull_last_error());
 	}
 	if (!m_block_list.remove(device)) {
 		error = true;
-		set_error(m_block_list.pull_last_error());
 	}
 	if (error) {
 		return false;

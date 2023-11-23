@@ -3,11 +3,14 @@
 
 #include <krisp-audio-sdk.hpp>
 
+#include "krisp-exception.h"
+#include "krisp-audio-sdk-ext.h"
+#include "audio-processor.h"
 #include "device_list.h"
 #include "gtest/gtest.h"
 
 #include "model_container.h"
-#include "mic_frame_cleaner_factory.h"
+#include "audio_processor_builder.h"
 #include "model_container_impl.h"
 
 
@@ -44,10 +47,10 @@ static_assert(0, "please rename conflicting macro");
 #endif
 #define MODELS_DIR PATH_JOIN(TEST_DATA_DIR, "models")
 
-constexpr wchar_t model_nc_8k[] = L"" PATH_JOIN(MODELS_DIR, "nc-8k.kw");
-constexpr wchar_t model_nc_16k[] = L"" PATH_JOIN(MODELS_DIR, "nc-16k.kw");
-constexpr wchar_t model_nc_32k[] = L"" PATH_JOIN(MODELS_DIR, "nc-32k.kw");
-constexpr wchar_t model_bvc_32k[] = L"" PATH_JOIN(MODELS_DIR, "bvc-32k.kw");
+constexpr wchar_t model_nc_8k[] = L"" PATH_JOIN(MODELS_DIR, "model-nc-8k.kw");
+constexpr wchar_t model_nc_16k[] = L"" PATH_JOIN(MODELS_DIR, "model-nc-16k.kw");
+constexpr wchar_t model_nc_32k[] = L"" PATH_JOIN(MODELS_DIR, "model-nc-32k.kw");
+constexpr wchar_t model_bvc_32k[] = L"" PATH_JOIN(MODELS_DIR, "model-bvc-32k.kw");
 
 #undef MODELS_DIR
 #undef PATH_JOIN
@@ -55,17 +58,13 @@ constexpr wchar_t model_bvc_32k[] = L"" PATH_JOIN(MODELS_DIR, "bvc-32k.kw");
 
 TEST(DeviceList, NoFileLoaded)
 {
+	using KrispAudioSDK::KrispDeviceListError;
 	KrispAudioSDK::DeviceList dev_list;
 	std::string device_1 = "Apple Air Pods Pro 2";
-	EXPECT_FALSE(dev_list.add(device_1));
+	EXPECT_THROW(dev_list.add(device_1), KrispDeviceListError);
 	EXPECT_EQ(dev_list.count(), 0);
-	EXPECT_TRUE(dev_list.has_error());
-	EXPECT_NE(dev_list.pull_last_error().size(), 0);
-	EXPECT_FALSE(dev_list.has_error());
 	EXPECT_FALSE(dev_list.remove(device_1));
-	EXPECT_FALSE(dev_list.has_error());
 	EXPECT_FALSE(dev_list.is_in_the_list(device_1));
-	EXPECT_FALSE(dev_list.has_error());
 }
 
 constexpr char air_pods_pro_2[] = "  Apple Air Pods Pro 2 ";
@@ -74,8 +73,7 @@ TEST(DeviceList, WithFileLoaded)
 {
 	{
 		KrispAudioSDK::DeviceList dev_list;
-		EXPECT_TRUE(dev_list.create_empty_file(block_list_path))
-			<< dev_list.get_last_error();
+		EXPECT_NO_THROW(dev_list.create_empty_file(block_list_path));
 		auto block_devices = {
 			"super device 1",
 			"super device 2",
@@ -87,39 +85,32 @@ TEST(DeviceList, WithFileLoaded)
 		{
 			EXPECT_TRUE(dev_list.add(device));
 		}
-		EXPECT_FALSE(dev_list.has_error());
 		EXPECT_EQ(dev_list.count(), block_devices.size());
 	}
 	{
 		KrispAudioSDK::DeviceList dev_list;
-		EXPECT_TRUE(dev_list.create_empty_file(allow_list_path))
-			<< dev_list.get_last_error();
+		EXPECT_NO_THROW(dev_list.create_empty_file(allow_list_path));
 		auto allow_devices = {"cheap headset", "any headset"};
 		for (auto device : allow_devices)
 		{
 			EXPECT_TRUE(dev_list.add(device));
 		}
-		EXPECT_FALSE(dev_list.has_error());
 		EXPECT_EQ(dev_list.count(), allow_devices.size());
 	}
 	KrispAudioSDK::DeviceList dev_list;
 	std::string device_in_the_list = air_pods_pro_2;
-	ASSERT_TRUE(dev_list.load_from_file(block_list_path))
-		<< dev_list.get_last_error();
+	ASSERT_NO_THROW(dev_list.load_from_file(block_list_path));
 	EXPECT_EQ(dev_list.count(), 5);
 	EXPECT_FALSE(dev_list.add(device_in_the_list));
-	EXPECT_FALSE(dev_list.has_error());
 	EXPECT_EQ(dev_list.count(), 5);
 	EXPECT_TRUE(dev_list.is_in_the_list(device_in_the_list));
 	EXPECT_TRUE(dev_list.remove(device_in_the_list));
 	EXPECT_FALSE(dev_list.is_in_the_list(device_in_the_list));
 	EXPECT_EQ(dev_list.count(), 4);
-	EXPECT_FALSE(dev_list.has_error());
 	EXPECT_TRUE(dev_list.add(device_in_the_list));
 	EXPECT_TRUE(dev_list.is_in_the_list(device_in_the_list));
 	EXPECT_EQ(dev_list.count(), 5);
-	EXPECT_FALSE(dev_list.has_error());
-	EXPECT_TRUE(dev_list.load_from_file(allow_list_path));
+	EXPECT_NO_THROW(dev_list.load_from_file(allow_list_path));
 	EXPECT_EQ(dev_list.count(), 2);
 }
 
@@ -127,8 +118,7 @@ TEST(DeviceList, BadList)
 {
 	KrispAudioSDK::DeviceList dev_list;
 	std::string device_in_the_list = air_pods_pro_2;
-	EXPECT_TRUE(dev_list.load_from_file(bad_list_path)) 
-		<< dev_list.get_last_error();
+	EXPECT_NO_THROW(dev_list.load_from_file(bad_list_path));
 	EXPECT_EQ(dev_list.count(), 6);
 }
 
@@ -175,6 +165,7 @@ TEST_F(Test, Model)
 
 TEST_F(Test, ModelContainer)
 {
+	using KrispAudioSDK::KrispException;
 	const unsigned model_count = 3;
 	std::array<const wchar_t *, model_count> models_path =
 		{model_nc_8k, model_nc_16k, model_nc_32k};
@@ -186,19 +177,16 @@ TEST_F(Test, ModelContainer)
 	}
 	for (unsigned id = 0; id < container.get_model_count(); ++id)
 	{
-		EXPECT_TRUE(container.register_model(id, models_path[id]));
+		EXPECT_NO_THROW(container.register_model(id, models_path[id]));
 	}
-	EXPECT_FALSE(container.register_model(3, model_bvc_32k));
-	EXPECT_TRUE(container.has_error());
-	EXPECT_GT(container.pull_last_error().size(), 0);
-	EXPECT_FALSE(container.has_error());
+	EXPECT_THROW(container.register_model(3, model_bvc_32k), KrispException);
 	for (unsigned id = 0; id < container.get_model_count(); ++id)
 	{
-		EXPECT_TRUE(container.is_model_registered(id));
+		EXPECT_NO_THROW(container.is_model_registered(id));
 	}
 	for (unsigned id = 0; id < container.get_model_count(); ++id)
 	{
-		EXPECT_TRUE(container.preload_model(id));
+		EXPECT_NO_THROW(container.preload_model(id));
 	}
 	for (unsigned id = 0; id < container.get_model_count(); ++id)
 	{
@@ -208,7 +196,7 @@ TEST_F(Test, ModelContainer)
 	}
 	for (unsigned id = 0; id < container.get_model_count(); ++id)
 	{
-		EXPECT_TRUE(container.disable_model_ownership(id));
+		EXPECT_NO_THROW(container.disable_model_ownership(id));
 	}
 	{
 		std::array<std::shared_ptr<KrispAudioSDK::Model>, model_count> models;
@@ -236,31 +224,25 @@ TEST_F(Test, ModelContainer)
 	}
 	for (unsigned id = 0; id < container.get_model_count(); ++id)
 	{
-		EXPECT_TRUE(container.enable_model_ownership(id));
+		EXPECT_NO_THROW(container.enable_model_ownership(id));
 	}
 }
 
-TEST_F(Test, MicFrameCleanerFactory)
+TEST_F(Test, AudioProcessorBuilder)
 {
-	KrispAudioSDK::MicFrameCleanerFactory factory;
-	using ModelId = KrispAudioSDK::MicFrameCleanerFactory::ModelId;
+	KrispAudioSDK::AudioProcessorBuilder builder;
+	using ModelId = KrispAudioSDK::ModelId;
 	using SamplingRate = KrispAudioSDK::SamplingRate;
-	EXPECT_TRUE(factory.load_device_lists(allow_list_path, block_list_path));
-	EXPECT_FALSE(factory.has_error());
-	EXPECT_TRUE(factory.register_model(ModelId::nc_8k, model_nc_8k));
-	EXPECT_TRUE(factory.register_model(ModelId::nc_16k, model_nc_16k));
-	EXPECT_TRUE(factory.register_model(ModelId::nc_32k, model_nc_32k));
-	EXPECT_TRUE(factory.register_model(ModelId::bvc_32k, model_bvc_32k));
-	EXPECT_FALSE(factory.has_error());
-	auto frame_cleaner_ptr = factory.create("fake device",
-		SamplingRate::sampling_rate_8000, false);
-	EXPECT_FALSE(factory.has_error());
-	EXPECT_NE(frame_cleaner_ptr.get(), nullptr);
-	auto frame_cleaner_2_ptr = factory.create("fake device",
-		SamplingRate::sampling_rate_8000, false);
-	EXPECT_FALSE(factory.has_error());
-	EXPECT_NE(frame_cleaner_2_ptr.get(), nullptr);
-	EXPECT_NE(frame_cleaner_ptr.get(), frame_cleaner_2_ptr.get());
+	EXPECT_NO_THROW(builder.load_device_lists(allow_list_path, block_list_path));
+	EXPECT_NO_THROW(builder.register_model(ModelId::mic_nc_8k, model_nc_8k));
+	EXPECT_NO_THROW(builder.register_model(ModelId::mic_nc_16k, model_nc_16k));
+	EXPECT_NO_THROW(builder.register_model(ModelId::mic_nc_32k, model_nc_32k));
+	EXPECT_NO_THROW(builder.register_model(ModelId::mic_bvc_32k, model_bvc_32k));
+	auto audio_cleaner_ptr = builder.create_nc(SamplingRate::sampling_rate_8000);
+	EXPECT_NE(audio_cleaner_ptr.get(), nullptr);
+	auto audio_cleaner_2_ptr = builder.create_nc(SamplingRate::sampling_rate_8000);
+	EXPECT_NE(audio_cleaner_2_ptr.get(), nullptr);
+	EXPECT_NE(audio_cleaner_ptr.get(), audio_cleaner_2_ptr.get());
 }
 
 }

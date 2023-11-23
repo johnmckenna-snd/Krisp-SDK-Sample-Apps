@@ -8,41 +8,39 @@
 #include "argument_parser.hpp"
 #include "sound_file.hpp"
 
-#include "frame_cleaner.h"
-#include "bvc_device_manager.h"
-#include "mic_frame_cleaner_factory.h"
-#include "helpers.h"
+#include "krisp-exception.h"
+#include "krisp-audio-sdk-ext.h"
 
 
 std::pair<bool, std::string> WriteFramesToFile(
-	const std::string & fileName, 
-	const std::vector<int16_t> & frames,
+	const std::string &fileName,
+	const std::vector<int16_t> &frames,
 	unsigned samplingRate)
 {
 	return writeSoundFilePCM16(fileName, frames, samplingRate);
 }
 
 std::pair<bool, std::string> WriteFramesToFile(
-	const std::string & fileName, 
-	const std::vector<float> & frames,
+	const std::string &fileName,
+	const std::vector<float> &frames,
 	unsigned samplingRate)
 {
 	return writeSoundFileFloat(fileName, frames, samplingRate);
 }
 
 template <typename T>
-int error(const T& e)
+int error(const T &e)
 {
 	std::cerr << e << std::endl;
 	return 1;
 }
 
-void readAllFrames(const SoundFile & sndFile, std::vector<short> & frames)
+void readAllFrames(const SoundFile &sndFile, std::vector<short> &frames)
 {
 	sndFile.readAllFramesPCM16(&frames);
 }
 
-void readAllFrames(const SoundFile & sndFile, std::vector<float> & frames)
+void readAllFrames(const SoundFile &sndFile, std::vector<float> &frames)
 {
 	sndFile.readAllFramesFloat(&frames);
 }
@@ -65,7 +63,7 @@ std::pair<KrispAudioSDK::SamplingRate, bool> getKrispSamplingRate(unsigned rate)
 	case 44100:
 		result.first = KrispAudioSDK::SamplingRate::sampling_rate_44100;
 		break;
-	case 48000: 
+	case 48000:
 		result.first = KrispAudioSDK::SamplingRate::sampling_rate_48000;
 		break;
 	case 88200:
@@ -82,11 +80,11 @@ std::pair<KrispAudioSDK::SamplingRate, bool> getKrispSamplingRate(unsigned rate)
 }
 
 template <typename SamplingFormat>
-int ncWavFileTmpl(
-		const SoundFile & inSndFile,
-		const std::string & output,
-		const std::string & weight_dir,
-		bool withStats)
+int cleanSndFile(
+	const SoundFile &inSndFile,
+	const std::string &output,
+	const std::string &weight_dir,
+	bool withStats)
 {
 	std::vector<SamplingFormat> wavDataIn;
 	std::vector<SamplingFormat> wavDataOut;
@@ -101,19 +99,31 @@ int ncWavFileTmpl(
 	{
 		return error("Unsupported sample rate");
 	}
-	KrispAudioSDK::MicFrameCleanerFactory factory;
+	KrispAudioSDK::SamplingRate samplingRate = samplingRateResult.first;
 
-
-	if (!KrispAudioSDK::load_models_from_directory(factory, weight_dir))
+	try
 	{
-		return error("Fail to load the weight directory");
+		KrispAudioSDK::register_models_in_directory(weight_dir);
+	}
+	catch (const KrispAudioSDK::KrispModelScannerError & err)
+	{
+		return error(err.what());
 	}
 
-	KrispAudioSDK::SamplingRate samplingRate = samplingRateResult.first;
-	auto frame_cleaner_ptr = factory.create("", samplingRate, false);
+	using KrispAudioSDK::AudioProcessor;
+	std::unique_ptr<AudioProcessor> frame_cleaner_ptr;
+
+	try
+	{
+		frame_cleaner_ptr = KrispAudioSDK::create_nc(samplingRate);
+	}
+	catch (const KrispAudioSDK::KrispException & err)
+	{
+		return error(err.what());
+	}
 	if (!frame_cleaner_ptr.get())
 	{
-		return error(factory.get_last_error());
+		return error("null pointer from the factory");
 	}
 	size_t frameSize = frame_cleaner_ptr->get_frame_size();
 
@@ -123,9 +133,8 @@ int ncWavFileTmpl(
 	{
 		bool success = frame_cleaner_ptr->process_frame(
 			&wavDataIn[i * frameSize],
-			&wavDataOut[i * frameSize]
-		);
-		if (!success) 
+			&wavDataOut[i * frameSize]);
+		if (!success)
 		{
 			return error("Error processing frame.");
 		}
@@ -139,8 +148,8 @@ int ncWavFileTmpl(
 	return 0;
 }
 
-int ncWavFile(const std::string& input, const std::string& output,
-		const std::string& weight_dir, bool withStats)
+int processWavFile(const std::string &input, const std::string &output,
+		const std::string &weight_dir, bool withStats)
 {
 	SoundFile inSndFile;
 	inSndFile.loadHeader(input);
@@ -151,20 +160,21 @@ int ncWavFile(const std::string& input, const std::string& output,
 	auto sndFileHeader = inSndFile.getHeader();
 	if (sndFileHeader.getFormat() == SoundFileFormat::PCM16)
 	{
-		return ncWavFileTmpl<short>(inSndFile, output, weight_dir, withStats);
+		return cleanSndFile<short>(inSndFile, output, weight_dir, withStats);
 	}
-	if (sndFileHeader.getFormat() == SoundFileFormat::FLOAT) {
-		return ncWavFileTmpl<float>(inSndFile, output, weight_dir, withStats);
+	if (sndFileHeader.getFormat() == SoundFileFormat::FLOAT)
+	{
+		return cleanSndFile<float>(inSndFile, output, weight_dir, withStats);
 	}
 	return error("The sound file format should be PCM16 or FLOAT.");
 }
 
-bool parseArguments(std::string& input, std::string& output,
-		std::string& weight_dir, bool &stats, int argc, char** argv)
+bool parseArguments(std::string &input, std::string &output,
+					std::string &weight_dir, bool &stats, int argc, char **argv)
 {
 	ArgumentParser p(argc, argv);
 	p.addArgument("--input", "-i", IMPORTANT);
-	p.addArgument("--output", "-o",IMPORTANT);
+	p.addArgument("--output", "-o", IMPORTANT);
 	p.addArgument("--weight_dir", "-w", IMPORTANT);
 	p.addArgument("--stats", "-s", OPTIONAL);
 	if (p.parse())
@@ -173,7 +183,8 @@ bool parseArguments(std::string& input, std::string& output,
 		output = p.getArgument("-o");
 		weight_dir = p.getArgument("-w");
 		stats = p.getOptionalArgument("-s");
-	} else
+	}
+	else
 	{
 		std::cerr << p.getError();
 		return false;
@@ -181,20 +192,18 @@ bool parseArguments(std::string& input, std::string& output,
 	return true;
 }
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-	auto l = KrispAudioSDK::get_library();
 	std::string in, out, weight_dir;
 	bool stats = false;
 	if (parseArguments(in, out, weight_dir, stats, argc, argv))
 	{
-		return ncWavFile(in, out, weight_dir, stats);
+		return processWavFile(in, out, weight_dir, stats);
 	}
 	else
 	{
 		std::cerr << "\nUsage:\n\t" << argv[0]
-			<< " -i input.wav -o output.wav -w weightFile" << std::endl;
+				  << " -i input.wav -o output.wav -w weightDir" << std::endl;
 		if (argc == 1)
 		{
 			return 0;

@@ -11,7 +11,6 @@
 #include "sound_file.hpp"
 
 
-
 static int krispAudioNcCleanAmbientNoise(
 		KrispAudioSessionID pSession,
 		const short * pFrameIn,
@@ -99,8 +98,8 @@ std::pair<KrispAudioSamplingRate, bool> getKrispSamplingRate(unsigned rate) {
 	case 44100:
 		result.first = KRISP_AUDIO_SAMPLING_RATE_44100HZ;
 		break;
-	case 48000: 
-		result.first = KRISP_AUDIO_SAMPLING_RATE_48000HZ; 
+	case 48000:
+		result.first = KRISP_AUDIO_SAMPLING_RATE_48000HZ;
 		break;
 	case 88200:
 		result.first = KRISP_AUDIO_SAMPLING_RATE_88200HZ;
@@ -126,7 +125,7 @@ void readAllFrames(const SoundFile & sndFile,
 }
 
 std::pair<bool, std::string> WriteFramesToFile(
-	const std::string & fileName, 
+	const std::string & fileName,
 	const std::vector<int16_t> & frames,
 	unsigned samplingRate)
 {
@@ -134,7 +133,7 @@ std::pair<bool, std::string> WriteFramesToFile(
 }
 
 std::pair<bool, std::string> WriteFramesToFile(
-	const std::string & fileName, 
+	const std::string & fileName,
 	const std::vector<float> & frames,
 	unsigned samplingRate)
 {

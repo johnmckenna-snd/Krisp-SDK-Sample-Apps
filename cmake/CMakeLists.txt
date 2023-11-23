@@ -49,36 +49,35 @@ add_executable(
 
 add_executable(
 	${APPNAME_SDK_EXT_TEST}
-	${ROOT_DIR}/src/sdk-extension/library_resources.cpp
-	${ROOT_DIR}/src/sdk-extension/bvc_device_manager.cpp
-	${ROOT_DIR}/src/sdk-extension/device_list.cpp
-	${ROOT_DIR}/src/sdk-extension/model.cpp
-	${ROOT_DIR}/src/sdk-extension/frame_cleaner.cpp
-	${ROOT_DIR}/src/sdk-extension/frame_processor_factory.cpp
-	${ROOT_DIR}/src/sdk-extension/mic_frame_cleaner_factory.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/library_resources.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/bvc_device_manager.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/device_list.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/model.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/audio_cleaner.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/audio_processor_builder.cpp
 	${ROOT_DIR}/src/sdk-extension-test/unit_test_device_list.cpp
 )
 
 add_executable(
-	${APPNAME_NC} 
+	${APPNAME_NC}
 	${ROOT_DIR}/src/sample-nc/main.cpp
 	${ROOT_DIR}/src/utils/sound_file.cpp
 	${ROOT_DIR}/src/utils/argument_parser.cpp
 )
 
 add_executable(
-	${APPNAME_SDK_EXT} 
+	${APPNAME_SDK_EXT}
 	${ROOT_DIR}/src/sample-sdk-extension/main.cpp
-	${ROOT_DIR}/src/sdk-extension/library_resources.cpp
 	${ROOT_DIR}/src/utils/sound_file.cpp
 	${ROOT_DIR}/src/utils/argument_parser.cpp
-	${ROOT_DIR}/src/sdk-extension/bvc_device_manager.cpp
-	${ROOT_DIR}/src/sdk-extension/device_list.cpp
-	${ROOT_DIR}/src/sdk-extension/model.cpp
-	${ROOT_DIR}/src/sdk-extension/helper.cpp
-	${ROOT_DIR}/src/sdk-extension/frame_cleaner.cpp
-	${ROOT_DIR}/src/sdk-extension/frame_processor_factory.cpp
-	${ROOT_DIR}/src/sdk-extension/mic_frame_cleaner_factory.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/library_resources.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/bvc_device_manager.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/device_list.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/model.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/model_scanner.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/audio_cleaner.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/audio_processor_builder.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/krisp_audio_sdk_ext.cpp
 )
 
 target_compile_definitions(
@@ -105,7 +104,8 @@ target_include_directories(
 	${APPNAME_SDK_EXT}
 	PRIVATE
 	${ROOT_DIR}/src/utils
-	${ROOT_DIR}/src/sdk-extension
+	${ROOT_DIR}/src/sdk-extension/include
+	${ROOT_DIR}/src/sdk-extension/internal
 	${LIBSNDFILE_INC}
 	$ENV{KRISP_INC}
 )
@@ -127,7 +127,8 @@ target_include_directories(
 	PRIVATE
 	./
 	${ROOT_DIR}/googletest/googletest/include
-	${ROOT_DIR}/src/sdk-extension
+	${ROOT_DIR}/src/sdk-extension/include
+	${ROOT_DIR}/src/sdk-extension/internal
 	$ENV{KRISP_INC}
 )
 
