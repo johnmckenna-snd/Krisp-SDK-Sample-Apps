@@ -2,11 +2,11 @@
 #include "krisp-exception.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 template <unsigned long ModelCount>
-void ModelContainer<ModelCount>::register_model(unsigned long id, const std::wstring & path)
+void ModelContainer<ModelCount>::registerModel(unsigned long id, const std::wstring & path)
 {
 	if (id > ModelCount - 1)
 	{
@@ -16,7 +16,7 @@ void ModelContainer<ModelCount>::register_model(unsigned long id, const std::wst
 }
 
 template <unsigned long ModelCount>
-void ModelContainer<ModelCount>::register_model(unsigned long id, void * blob_addr, size_t blob_size)
+void ModelContainer<ModelCount>::registerModel(unsigned long id, void * blob_addr, size_t blob_size)
 {
 	if (id > ModelCount - 1)
 	{
@@ -28,7 +28,7 @@ void ModelContainer<ModelCount>::register_model(unsigned long id, void * blob_ad
 }
 
 template <unsigned long ModelCount>
-void ModelContainer<ModelCount>::unregister_model(unsigned long id)
+void ModelContainer<ModelCount>::unregisterModel(unsigned long id)
 {
 	if (id > ModelCount - 1)
 	{
@@ -58,7 +58,7 @@ bool ModelContainer<ModelCount>::is_model_registered(unsigned long id)
 }
 
 template <unsigned long ModelCount>
-void ModelContainer<ModelCount>::preload_model(unsigned long id)
+void ModelContainer<ModelCount>::preloadModel(unsigned long id)
 {
 	if (!is_model_registered(id))
 	{
@@ -67,7 +67,7 @@ void ModelContainer<ModelCount>::preload_model(unsigned long id)
 	auto model_ptr = std::make_shared<Model>();
 	auto given_name = std::to_string(id);
 	auto path = m_models_data[id].m_path;
-	bool loaded = model_ptr->load(path, given_name);
+	bool loaded = model_ptr->load(path, static_cast<ModelId>(id), given_name);
 	if (!loaded)
 	{
 		throw KrispModelLoadError(model_ptr->get_last_error());
@@ -107,7 +107,7 @@ std::shared_ptr<Model> ModelContainer<ModelCount>::get_model(unsigned long id)
 	{
 		if (m_models_data[id].m_weak_ref.expired())
 		{
-			preload_model(id);
+			preloadModel(id);
 		}
 		else
 		{

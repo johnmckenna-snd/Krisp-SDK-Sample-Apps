@@ -3,7 +3,7 @@
 #include "device_list.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 

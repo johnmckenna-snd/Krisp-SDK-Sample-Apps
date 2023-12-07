@@ -3,7 +3,7 @@
 #include <krisp-audio-sdk.hpp>
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 LibraryResources::LibraryResources()

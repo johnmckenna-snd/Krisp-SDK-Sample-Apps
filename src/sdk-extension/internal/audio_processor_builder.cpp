@@ -12,7 +12,7 @@
 #include "model_container_impl.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 
@@ -24,28 +24,28 @@ AudioProcessorBuilder::AudioProcessorBuilder() :
 	m_library_ptr = get_library();
 }
 
-void AudioProcessorBuilder::register_model(ModelId id,
+void AudioProcessorBuilder::registerModel(ModelId id,
 	const std::wstring & path)
 {
-	m_model_container.register_model(id, path);
+	m_model_container.registerModel(id, path);
 }
 
-void AudioProcessorBuilder::register_model(ModelId id, void * blob_addr, size_t blob_size)
+void AudioProcessorBuilder::registerModel(ModelId id, void * blob_addr, size_t blob_size)
 {
-	m_model_container.register_model(id, blob_addr, blob_size);
+	m_model_container.registerModel(id, blob_addr, blob_size);
 }
 
-void AudioProcessorBuilder::unregister_model(ModelId id)
+void AudioProcessorBuilder::unregisterModel(ModelId id)
 {
-	m_model_container.unregister_model(id);
+	m_model_container.unregisterModel(id);
 }
 
-void AudioProcessorBuilder::preload_model(ModelId id)
+void AudioProcessorBuilder::preloadModel(ModelId id)
 {
-	m_model_container.preload_model(id);
+	m_model_container.preloadModel(id);
 }
 
-void AudioProcessorBuilder::set_model_policy(ModelId id,
+void AudioProcessorBuilder::setModelPolicy(ModelId id,
 	ModelMemoryPolicy policy_id)
 {
 	if (id >= m_model_container.get_model_count())
@@ -54,10 +54,10 @@ void AudioProcessorBuilder::set_model_policy(ModelId id,
 	}
 	switch (policy_id)
 	{
-	case ModelMemoryPolicy::keep_cached_after_load:
+	case ModelMemoryPolicy::KeepCachedAfterLoad:
 		m_model_container.enable_model_ownership(id);
 		break;
-	case ModelMemoryPolicy::unload_if_not_used:
+	case ModelMemoryPolicy::UnloadIfNotUsed:
 		m_model_container.disable_model_ownership(id);
 		break;
 	default:
@@ -74,15 +74,15 @@ void AudioProcessorBuilder::load_device_lists(
 
 std::shared_ptr<Model> AudioProcessorBuilder::choose_model_8k()
 {
-	if (m_model_container.is_model_registered(ModelId::mic_nc_8k))
+	if (m_model_container.is_model_registered(ModelId::MicNc8K))
 	{
-		return get_model(ModelId::mic_nc_8k);
+		return get_model(ModelId::MicNc8K);
 	}
 	else
 	{
-		if (m_model_container.is_model_registered(ModelId::mic_nc_16k))
+		if (m_model_container.is_model_registered(ModelId::MicNc16K))
 		{
-			return get_model(ModelId::mic_nc_16k);
+			return get_model(ModelId::MicNc16K);
 		}
 		else
 		{
@@ -93,13 +93,13 @@ std::shared_ptr<Model> AudioProcessorBuilder::choose_model_8k()
 
 std::shared_ptr<Model> AudioProcessorBuilder::choose_model_16k()
 {
-	if (m_model_container.is_model_registered(ModelId::mic_nc_16k))
+	if (m_model_container.is_model_registered(ModelId::MicNc16K))
 	{
-		return get_model(ModelId::mic_nc_16k);
+		return get_model(ModelId::MicNc16K);
 	}
-	if (m_model_container.is_model_registered(ModelId::mic_nc_32k))
+	if (m_model_container.is_model_registered(ModelId::MicNc32K))
 	{
-		return get_model(ModelId::mic_nc_32k);
+		return get_model(ModelId::MicNc32K);
 	}
 	throw KrispModelSelectionError("No suitable model registered for 16KHz sampling rate.");
 }
@@ -107,28 +107,28 @@ std::shared_ptr<Model> AudioProcessorBuilder::choose_model_16k()
 std::shared_ptr<Model> AudioProcessorBuilder::choose_model(
 	const std::string & device, SamplingRate r, bool try_bvc)
 {
-	if (r == SamplingRate::sampling_rate_8000)
+	if (r == SamplingRate::Sr8000)
 	{
 		return choose_model_8k();
 	}
 	if (try_bvc && m_device_manager.is_allowed(device) &&
-		m_model_container.is_model_registered(ModelId::mic_bvc_32k))
+		m_model_container.is_model_registered(ModelId::MicBvc32K))
 	{
-		return get_model(ModelId::mic_bvc_32k);
+		return get_model(ModelId::MicBvc32K);
 	}
-	if (r == SamplingRate::sampling_rate_16000)
+	if (r == SamplingRate::Sr16000)
 	{
 		return choose_model_16k();
 	}
-	if (m_model_container.is_model_registered(ModelId::mic_nc_32k))
+	if (m_model_container.is_model_registered(ModelId::MicNc32K))
 	{
-		return get_model(ModelId::mic_nc_32k);
+		return get_model(ModelId::MicNc32K);
 	}
 	throw KrispModelSelectionError(
 		"No suitable model is registered for 32KHz and above sampling rates.");
 }
 
-std::unique_ptr<AudioProcessor> AudioProcessorBuilder::create_nc(SamplingRate r)
+std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createNc(SamplingRate r)
 {
 	constexpr bool try_bvc = false;
 	auto model_ptr = this->choose_model("", r, try_bvc);
@@ -139,7 +139,17 @@ std::unique_ptr<AudioProcessor> AudioProcessorBuilder::create_nc(SamplingRate r)
 	return std::make_unique<AudioCleaner>(model_ptr, r);
 }
 
-std::unique_ptr<AudioProcessor> AudioProcessorBuilder::create_bvc(SamplingRate r,
+std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createNc(SamplingRate r, ModelId model_id)
+{
+	auto model_ptr = this->get_model(model_id);
+	if (!model_ptr.get())
+	{
+		throw KrispModelSelectionError("Failed to load the specified model. Is it registered?");
+	}
+	return std::make_unique<AudioCleaner>(model_ptr, r);
+}
+
+std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createBvc(SamplingRate r,
 	const std::string & device)
 {
 	constexpr bool try_bvc = true;

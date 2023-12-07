@@ -5,7 +5,7 @@
 #include <krisp-audio-sdk-nc-stats.hpp>
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 
@@ -52,7 +52,7 @@ AudioCleaner::AudioCleaner(const AudioCleaner & copy) :
 	}
 }
 
-bool AudioCleaner::impl_process_frame_pcm16(const short * frame_in, short * frame_out)
+bool AudioCleaner::implProcessFramePcm16(const short * frame_in, short * frame_out)
 {
 	int r = krispAudioNcCleanAmbientNoiseInt16(
 		m_krisp_session_id,
@@ -69,7 +69,7 @@ bool AudioCleaner::impl_process_frame_pcm16(const short * frame_in, short * fram
 	return false;
 }
 
-bool AudioCleaner::impl_process_frame_float(const float * frame_in, float * frame_out)
+bool AudioCleaner::implProcessFrameFloat(const float * frame_in, float * frame_out)
 {
 	int r = krispAudioNcCleanAmbientNoiseFloat(
 		m_krisp_session_id,
@@ -86,29 +86,96 @@ bool AudioCleaner::impl_process_frame_float(const float * frame_in, float * fram
 	return false;
 }
 
-size_t AudioCleaner::impl_get_frame_size() const
+size_t AudioCleaner::implGetFrameSize() const
 {
 	return this->m_frame_size;
 }
 
 AudioCleanerWithStats::AudioCleanerWithStats(const std::shared_ptr<Model> & model_ptr,
 		SamplingRate r) :
-	AudioProcessor(model_ptr->get_id()),
+	AudioNoiseCleanerWithStats(model_ptr->get_id()),
 	m_model_ptr(model_ptr),
 	m_krisp_session_id(nullptr),
 	m_sampling_rate(r),
 	m_frame_size((r * KRISP_AUDIO_FRAME_DURATION_10MS) / 1000),
 	m_model_alias()
 {
+	m_frameStats.m_voiceEnergy = 0;
+	m_frameStats.m_noiseEnergy = 0;
 	m_model_alias = model_ptr->get_given_name();
 	m_krisp_session_id = krispAudioNcWithStatsCreateSession(
-		static_cast<KrispAudioSamplingRate>(r),
-		static_cast<KrispAudioSamplingRate>(r),
+		static_cast<KrispAudioSamplingRate>(m_sampling_rate),
+		static_cast<KrispAudioSamplingRate>(m_sampling_rate),
 		KRISP_AUDIO_FRAME_DURATION_10MS,
 		m_model_alias.c_str());
 }
 
-bool AudioCleanerWithStats::impl_process_frame_pcm16(const short * frame_in, short * frame_out)
+AudioCleanerWithStats::AudioCleanerWithStats(const AudioCleanerWithStats & copy) :
+	AudioNoiseCleanerWithStats(copy.m_model_ptr->get_id()),
+	m_model_ptr(copy.m_model_ptr),
+	m_krisp_session_id(nullptr),
+	m_sampling_rate(copy.m_sampling_rate),
+	m_frame_size(copy.m_frame_size),
+	m_model_alias(copy.m_model_alias)
+{
+	m_frameStats.m_voiceEnergy = 0;
+	m_frameStats.m_noiseEnergy = 0;
+	m_krisp_session_id = krispAudioNcWithStatsCreateSession(
+		static_cast<KrispAudioSamplingRate>(m_sampling_rate),
+		static_cast<KrispAudioSamplingRate>(m_sampling_rate),
+		KRISP_AUDIO_FRAME_DURATION_10MS,
+		m_model_alias.c_str());
+}
+
+
+AudioCleanerWithStats & AudioCleanerWithStats::operator=(const AudioCleanerWithStats & copy)
+{
+	m_model_id = copy.m_model_id;
+	m_model_ptr = copy.m_model_ptr;
+	m_krisp_session_id = nullptr;
+	m_sampling_rate = copy.m_sampling_rate;
+	m_frame_size = copy.m_frame_size;
+	m_model_alias = copy.m_model_alias;
+	m_frameStats.m_voiceEnergy = 0;
+	m_frameStats.m_noiseEnergy = 0;
+
+	m_krisp_session_id = krispAudioNcWithStatsCreateSession(
+		static_cast<KrispAudioSamplingRate>(m_sampling_rate),
+		static_cast<KrispAudioSamplingRate>(m_sampling_rate),
+		KRISP_AUDIO_FRAME_DURATION_10MS,
+		m_model_alias.c_str());
+
+	return *this;
+}
+
+AudioCleanerWithStats::AudioCleanerWithStats(AudioCleanerWithStats && copy) :
+	AudioNoiseCleanerWithStats(copy.m_model_ptr->get_id()),
+	m_model_ptr(std::move(copy.m_model_ptr)),
+	m_krisp_session_id(copy.m_krisp_session_id),
+	m_sampling_rate(copy.m_sampling_rate),
+	m_frame_size(copy.m_frame_size),
+	m_model_alias(std::move(copy.m_model_alias))
+{
+	m_frameStats.m_voiceEnergy = 0;
+	m_frameStats.m_noiseEnergy = 0;
+	copy.m_krisp_session_id = nullptr;
+}
+
+AudioCleanerWithStats & AudioCleanerWithStats::operator = (AudioCleanerWithStats && copy)
+{
+	m_model_id = copy.m_model_id;
+	m_model_ptr = std::move(copy.m_model_ptr);
+	m_krisp_session_id = copy.m_krisp_session_id;
+	copy.m_krisp_session_id = nullptr;
+	m_sampling_rate = copy.m_sampling_rate;
+	m_frame_size = copy.m_frame_size;
+	m_model_alias = std::move(copy.m_model_alias);
+	m_frameStats.m_voiceEnergy = 0;
+	m_frameStats.m_noiseEnergy = 0;
+	return *this;
+}
+
+bool AudioCleanerWithStats::implProcessFramePcm16(const short * frame_in, short * frame_out)
 {
 	KrispAudioNcPerFrameInfo energy_info;
 	int r = krispAudioNcWithStatsCleanAmbientNoiseInt16(
@@ -121,17 +188,17 @@ bool AudioCleanerWithStats::impl_process_frame_pcm16(const short * frame_in, sho
 	);
 	if (r == 0)
 	{
-		m_frame_noise_energy = energy_info.noiseEnergy;
-		m_frame_voice_energy = energy_info.voiceEnergy;
+		m_frameStats.m_noiseEnergy = energy_info.noiseEnergy;
+		m_frameStats.m_voiceEnergy = energy_info.voiceEnergy;
 		return true;
 	}
-	m_frame_noise_energy = 0;
-	m_frame_voice_energy = 0;
+	m_frameStats.m_noiseEnergy = 0;
+	m_frameStats.m_voiceEnergy = 0;
 	// TODO: error handling
 	return false;
 }
 
-bool AudioCleanerWithStats::impl_process_frame_float(const float * frame_in, float * frame_out)
+bool AudioCleanerWithStats::implProcessFrameFloat(const float * frame_in, float * frame_out)
 {
 	KrispAudioNcPerFrameInfo energy_info;
 	int r = krispAudioNcWithStatsCleanAmbientNoiseFloat(
@@ -144,39 +211,35 @@ bool AudioCleanerWithStats::impl_process_frame_float(const float * frame_in, flo
 	);
 	if (r == 0)
 	{
-		m_frame_noise_energy = energy_info.noiseEnergy;
-		m_frame_voice_energy = energy_info.voiceEnergy;
+		m_frameStats.m_noiseEnergy = energy_info.noiseEnergy;
+		m_frameStats.m_voiceEnergy = energy_info.voiceEnergy;
 		return true;
 	}
-	m_frame_noise_energy = 0;
-	m_frame_voice_energy = 0;
+	m_frameStats.m_noiseEnergy = 0;
+	m_frameStats.m_voiceEnergy = 0;
 	// TODO: error handling
 	return false;
 }
 
-AudioCleanerWithStats::TotalStats AudioCleanerWithStats::get_stats() const
+AudioCleanerWithStats::CumulativeStats AudioCleanerWithStats::implGetCumulativeStats() const
 {
-	TotalStats stats;
 	KrispAudioNcStats krisp_stats;
-	stats.m_talk_time_ms = krisp_stats.voiceStats.talkTimeMs;
-	stats.m_low_nosie_ms = krisp_stats.noiseStats.lowNoiseMs;
-	stats.m_medium_noise_ms = krisp_stats.noiseStats.mediumNoiseMs;
-	stats.m_high_noise_ms = krisp_stats.noiseStats.highNoiseMs;
-	stats.m_no_noise_ms = krisp_stats.noiseStats.noNoiseMs;
 	krispAudioNcWithStatsRetrieveStats(m_krisp_session_id, &krisp_stats);
+	CumulativeStats stats;
+	stats.m_talkTimeMs = krisp_stats.voiceStats.talkTimeMs;
+	stats.m_lowNosieMs = krisp_stats.noiseStats.lowNoiseMs;
+	stats.m_mediumNoiseMs = krisp_stats.noiseStats.mediumNoiseMs;
+	stats.m_highNoiseMs = krisp_stats.noiseStats.highNoiseMs;
+	stats.m_noNoiseMs = krisp_stats.noiseStats.noNoiseMs;
+	return stats;
 }
 
-unsigned int AudioCleanerWithStats::get_frame_voice_energy() const
+AudioCleanerWithStats::FrameStats AudioCleanerWithStats::implGetFrameStats() const
 {
-	return this->m_frame_voice_energy;
+	return this->m_frameStats;
 }
 
-unsigned int AudioCleanerWithStats::get_frame_noise_energy() const
-{
-	return this->m_frame_noise_energy;
-}
-
-size_t AudioCleanerWithStats::impl_get_frame_size() const
+size_t AudioCleanerWithStats::implGetFrameSize() const
 {
 	return this->m_frame_size;
 }

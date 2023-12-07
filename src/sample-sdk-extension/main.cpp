@@ -45,35 +45,35 @@ void readAllFrames(const SoundFile &sndFile, std::vector<float> &frames)
 	sndFile.readAllFramesFloat(&frames);
 }
 
-std::pair<KrispAudioSDK::SamplingRate, bool> getKrispSamplingRate(unsigned rate)
+std::pair<KrispVoiceSDK::SamplingRate, bool> getKrispSamplingRate(unsigned rate)
 {
-	std::pair<KrispAudioSDK::SamplingRate, bool> result;
+	std::pair<KrispVoiceSDK::SamplingRate, bool> result;
 	result.second = true;
 	switch (rate)
 	{
 	case 8000:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_8000;
+		result.first = KrispVoiceSDK::SamplingRate::Sr8000;
 		break;
 	case 16000:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_16000;
+		result.first = KrispVoiceSDK::SamplingRate::Sr16000;
 		break;
 	case 32000:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_32000;
+		result.first = KrispVoiceSDK::SamplingRate::Sr32000;
 		break;
 	case 44100:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_44100;
+		result.first = KrispVoiceSDK::SamplingRate::Sr44100;
 		break;
 	case 48000:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_48000;
+		result.first = KrispVoiceSDK::SamplingRate::Sr48000;
 		break;
 	case 88200:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_88200;
+		result.first = KrispVoiceSDK::SamplingRate::Sr88200;
 		break;
 	case 96000:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_96000;
+		result.first = KrispVoiceSDK::SamplingRate::Sr96000;
 		break;
 	default:
-		result.first = KrispAudioSDK::SamplingRate::sampling_rate_16000;
+		result.first = KrispVoiceSDK::SamplingRate::Sr16000;
 		result.second = false;
 	}
 	return result;
@@ -99,25 +99,25 @@ int cleanSndFile(
 	{
 		return error("Unsupported sample rate");
 	}
-	KrispAudioSDK::SamplingRate samplingRate = samplingRateResult.first;
+	KrispVoiceSDK::SamplingRate samplingRate = samplingRateResult.first;
 
 	try
 	{
-		KrispAudioSDK::register_models_in_directory(weight_dir);
+		KrispVoiceSDK::registerModelsDirectory(weight_dir);
 	}
-	catch (const KrispAudioSDK::KrispModelScannerError & err)
+	catch (const KrispVoiceSDK::KrispModelScannerError & err)
 	{
 		return error(err.what());
 	}
 
-	using KrispAudioSDK::AudioProcessor;
+	using KrispVoiceSDK::AudioProcessor;
 	std::unique_ptr<AudioProcessor> frame_cleaner_ptr;
 
 	try
 	{
-		frame_cleaner_ptr = KrispAudioSDK::create_nc(samplingRate);
+		frame_cleaner_ptr = KrispVoiceSDK::createNc(samplingRate);
 	}
-	catch (const KrispAudioSDK::KrispException & err)
+	catch (const KrispVoiceSDK::KrispException & err)
 	{
 		return error(err.what());
 	}
@@ -125,13 +125,13 @@ int cleanSndFile(
 	{
 		return error("null pointer from the factory");
 	}
-	size_t frameSize = frame_cleaner_ptr->get_frame_size();
+	size_t frameSize = frame_cleaner_ptr->getFrameSize();
 
 	wavDataOut.resize(wavDataIn.size());
 	size_t i;
 	for (i = 0; (i + 1) * frameSize <= wavDataIn.size(); ++i)
 	{
-		bool success = frame_cleaner_ptr->process_frame(
+		bool success = frame_cleaner_ptr->processFrame(
 			&wavDataIn[i * frameSize],
 			&wavDataOut[i * frameSize]);
 		if (!success)

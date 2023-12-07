@@ -4,7 +4,7 @@
 #include <set>
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 class DeviceList

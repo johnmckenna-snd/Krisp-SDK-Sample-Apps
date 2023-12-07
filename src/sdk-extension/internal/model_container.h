@@ -7,7 +7,7 @@
 #include "model.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 
@@ -15,11 +15,11 @@ template <unsigned long ModelCount>
 class ModelContainer
 {
 public:
-	void register_model(unsigned long id, const std::wstring & path);
-	void register_model(unsigned long id, void * blob_addr, size_t blob_size);
-	void unregister_model(unsigned long id);
+	void registerModel(unsigned long id, const std::wstring & path);
+	void registerModel(unsigned long id, void * blob_addr, size_t blob_size);
+	void unregisterModel(unsigned long id);
 	bool is_model_registered(unsigned long id);
-	void preload_model(unsigned long id);
+	void preloadModel(unsigned long id);
 	void enable_model_ownership(unsigned long id);
 	void disable_model_ownership(unsigned long id);
 	std::shared_ptr<Model> get_model(unsigned long id);

@@ -6,7 +6,7 @@
 #include "library_resources.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 class Model final
@@ -34,7 +34,7 @@ public:
 	ModelId get_id() const;
 
 private:
-	ModelId m_id = ModelId::undefined;
+	ModelId m_id = ModelId::Undefined;
 	std::string m_given_name;
 	std::string m_last_error;
 	bool m_loaded;

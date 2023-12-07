@@ -10,7 +10,7 @@
 #include "bvc_device_manager.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 
@@ -29,39 +29,40 @@ public:
 	AudioProcessorBuilder();
 	/**
 	 * Let the system know that the model is available in the memory.
-	 * You must call unregister_model before using the blob_ptr memory block
+	 * You must call unregisterModel before using the blob_ptr memory block
 	 * for something else.
 	 */
-	void register_model(ModelId id, void * blob_ptr, size_t blob_size);
+	void registerModel(ModelId id, void * blob_ptr, size_t blob_size);
 	/**
 	 * Let the system know that the model is available on the filesystem.
-	 * You must call unregister_model if the file will not be available for any
+	 * You must call unregisterModel if the file will not be available for any
 	 * reason.
 	 */
-	void register_model(ModelId id, const std::wstring & path);
+	void registerModel(ModelId id, const std::wstring & path);
 	/**
 	 * Let the system know that the model previusly registered is not available
 	 * anymore.
 	 */
-	void unregister_model(ModelId id);
+	void unregisterModel(ModelId id);
 	/**
 	 * Set the memory policy for the model.
 	 */
-	void set_model_policy(ModelId id, ModelMemoryPolicy policy_id);
+	void setModelPolicy(ModelId id, ModelMemoryPolicy policy_id);
 	/**
 	 * Load the model into the memory. Otherwise the model will be loaded
 	 * runtime during FrameCleaner creation which may introduce latency
 	 * depending on the model size and the CPU.
 	 */
-	void preload_model(ModelId id);
+	void preloadModel(ModelId id);
 	/**
 	 * load BVC device allow and block list.
 	 */
 	void load_device_lists(const std::string & allow_list_path,
 		const std::string & block_list_path);
 
-	std::unique_ptr<AudioProcessor> create_bvc(SamplingRate, const std::string & device);
-	std::unique_ptr<AudioProcessor> create_nc(SamplingRate);
+	std::unique_ptr<AudioProcessor> createBvc(SamplingRate, const std::string & device);
+	std::unique_ptr<AudioProcessor> createNc(SamplingRate);
+	std::unique_ptr<AudioProcessor> createNc(SamplingRate, ModelId model_id);
 
 private:
 	ModelContainer<ModelsNumber> m_model_container;

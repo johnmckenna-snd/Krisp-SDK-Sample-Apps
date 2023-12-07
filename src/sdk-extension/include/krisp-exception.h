@@ -4,7 +4,7 @@
 #include <string>
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 class KrispException : public std::exception

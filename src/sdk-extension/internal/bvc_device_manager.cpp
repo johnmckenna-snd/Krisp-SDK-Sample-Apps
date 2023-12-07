@@ -1,7 +1,7 @@
 #include "bvc_device_manager.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 BVCDeviceManager::BVCDeviceManager() : m_allow_list(),

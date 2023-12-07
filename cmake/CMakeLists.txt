@@ -12,6 +12,7 @@ set(CMAKE_BUILD_TYPE Debug)
 get_filename_component(ROOT_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${ROOT_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${ROOT_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${ROOT_DIR}/bin)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,6 +29,7 @@ include(libresample.cmake)
 set(APPNAME_NC sample-nc)
 set(APPNAME_SDK_EXT sample-sdk-ext)
 set(DLLNAME krisp-dll)
+set(SDKEXT sdk-extension)
 set(APPNAME_DLL dll-test-app)
 set(APPNAME_SDK_EXT_TEST test-sdk-ext)
 #set(APPNAME_VAD sample-vad)
@@ -65,11 +67,8 @@ add_executable(
 	${ROOT_DIR}/src/utils/argument_parser.cpp
 )
 
-add_executable(
-	${APPNAME_SDK_EXT}
-	${ROOT_DIR}/src/sample-sdk-extension/main.cpp
-	${ROOT_DIR}/src/utils/sound_file.cpp
-	${ROOT_DIR}/src/utils/argument_parser.cpp
+add_library(
+	${SDKEXT} STATIC
 	${ROOT_DIR}/src/sdk-extension/internal/library_resources.cpp
 	${ROOT_DIR}/src/sdk-extension/internal/bvc_device_manager.cpp
 	${ROOT_DIR}/src/sdk-extension/internal/device_list.cpp
@@ -80,14 +79,15 @@ add_executable(
 	${ROOT_DIR}/src/sdk-extension/internal/krisp_audio_sdk_ext.cpp
 )
 
-target_compile_definitions(
-	${APPNAME_SDK_EXT_TEST}
-	PRIVATE
-	TEST_DATA_DIR="${ROOT_DIR}/src/sdk-extension-test/data"
+add_executable(
+	${APPNAME_SDK_EXT}
+	${ROOT_DIR}/src/sample-sdk-extension/main.cpp
+	${ROOT_DIR}/src/utils/sound_file.cpp
+	${ROOT_DIR}/src/utils/argument_parser.cpp
 )
 
 target_compile_definitions(
-	${APPNAME_SDK_EXT}
+	${APPNAME_SDK_EXT_TEST}
 	PRIVATE
 	TEST_DATA_DIR="${ROOT_DIR}/src/sdk-extension-test/data"
 )
@@ -97,6 +97,14 @@ target_include_directories(
 	PRIVATE
 	${ROOT_DIR}/src/utils
 	${LIBSNDFILE_INC}
+	$ENV{KRISP_INC}
+)
+
+target_include_directories(
+	${SDKEXT}
+	PRIVATE
+	${ROOT_DIR}/src/sdk-extension/include
+	${ROOT_DIR}/src/sdk-extension/internal
 	$ENV{KRISP_INC}
 )
 
@@ -144,12 +152,14 @@ target_link_libraries(
 	${LIBSNDFILE_ABSPATH}
 	${LIBKRISP_ABSPATH}
 	${LIBRESAMPLE_ABSPATH}
+	${SDKEXT}
 )
 
 target_link_libraries(
 	${DLLNAME}
 	${LIBKRISP_ABSPATH}
 	${LIBRESAMPLE_ABSPATH}
+	${SDKEXT_LIB}
 )
 
 target_link_libraries(

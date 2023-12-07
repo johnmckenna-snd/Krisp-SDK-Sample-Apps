@@ -12,7 +12,7 @@
 #include "audio_processor_builder.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 
@@ -77,7 +77,7 @@ public:
 		}
 	}
 
-	using ModelId = KrispAudioSDK::ModelId;
+	using ModelId = KrispVoiceSDK::ModelId;
 
 	const std::map<ModelId, std::string> & get_mic_models_paths() const
 	{
@@ -106,7 +106,7 @@ std::vector<ModelId> get_models_from_directory(AudioProcessorBuilder & builder,
 		found_models.push_back(model_id);
 		std::wstring_convert<std::codecvt_utf8<wchar_t>> wstringConverter;
 		std::wstring model_wpath = wstringConverter.from_bytes(model_path);
-		builder.register_model(model_id, model_wpath);
+		builder.registerModel(model_id, model_wpath);
 	}
 	return found_models;
 }

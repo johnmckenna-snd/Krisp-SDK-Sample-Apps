@@ -7,7 +7,7 @@
 #include "audio_processor_builder.h"
 
 
-namespace KrispAudioSDK
+namespace KrispVoiceSDK
 {
 
 std::vector<ModelId> get_models_from_directory(
