@@ -2,27 +2,24 @@
 
 #include "device_list.h"
 
-
 namespace KrispVoiceSDK
 {
-
 
 class BVCDeviceManager
 {
 public:
-	BVCDeviceManager();
-	void load_lists(const std::string & allow_list_path,
-		const std::string & block_list_path);
-	bool allow_device(const std::string & device);
-	bool block_device(const std::string & device);
-	bool remove_device(const std::string & device);
-	bool is_allowed(const std::string & device) const;
-	void force_bvc(bool enforce_bvc);
+    BVCDeviceManager();
+    void loadLists(const std::string& allowListPath, const std::string& blockListPath);
+    bool allowDevice(const std::string& device);
+    bool blockDevice(const std::string& device);
+    bool removeDevice(const std::string& device);
+    bool isAllowed(const std::string& device) const;
+    void forceBvc(bool enforceBvc);
 
 private:
-	DeviceList m_allow_list;
-	DeviceList m_block_list;
-	bool m_enforce_bvc;
+    DeviceList _allowList;
+    DeviceList _blockList;
+    bool _enforceBvc;
 };
 
-}
+} // namespace KrispVoiceSDK

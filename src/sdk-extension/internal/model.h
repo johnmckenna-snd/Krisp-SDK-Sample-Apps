@@ -2,9 +2,8 @@
 
 #include <string>
 
-#include "krisp-audio-sdk-ext.h"
+#include "krisp-voice-sdk.h"
 #include "library_resources.h"
-
 
 namespace KrispVoiceSDK
 {
@@ -12,34 +11,39 @@ namespace KrispVoiceSDK
 class Model final
 {
 public:
-	Model();
-	~Model();
+    Model();
+    ~Model();
 
-	// the same model is supposed to be shared across multiple streams that is why copy
-	// should be forbidden
-	Model(const Model &) = delete;
-	Model & operator = (const Model &) = delete;
+    // the same model is supposed to be shared across multiple streams that is
+    // why copy should be forbidden
+    Model(const Model&) = delete;
+    Model& operator=(const Model&) = delete;
 
-	Model(Model &&) = default;
-	Model & operator = (Model &&) = default;
+    Model(Model&&) = default;
+    Model& operator=(Model&&) = default;
 
-	bool load(const std::wstring &path, ModelId model_id, const std::string &given_name);
-	bool load(void *blob_ptr, size_t blob_size, ModelId model_id, const std::string &given_name);
-	bool unload();
-	std::string get_given_name() const;
-	bool is_loaded() const;
-	const std::string &get_last_error() const;
-	bool has_error() const;
-	std::string pull_last_error();
-	ModelId get_id() const;
+    bool load(
+        const std::wstring& path, ModelId id, const std::string& givenName);
+    bool load(
+        void* blobAddr,
+        size_t blobSize,
+        ModelId id,
+        const std::string& givenName);
+    bool unload();
+    std::string getGivenName() const;
+    bool isLoaded() const;
+    const std::string& getLastError() const;
+    bool hasError() const;
+    std::string pullLastError();
+    ModelId getId() const;
 
 private:
-	ModelId m_id = ModelId::Undefined;
-	std::string m_given_name;
-	std::string m_last_error;
-	bool m_loaded;
+    ModelId _id = ModelId::Undefined;
+    std::string _givenName;
+    std::string _lastError;
+    bool _loaded;
 
-	std::shared_ptr<LibraryResources> m_library_ptr;
+    std::shared_ptr<LibraryResources> _libraryPtr;
 };
 
-}
+} // namespace KrispVoiceSDK

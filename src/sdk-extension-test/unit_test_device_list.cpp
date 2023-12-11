@@ -4,7 +4,7 @@
 #include <krisp-audio-sdk.hpp>
 
 #include "krisp-exception.h"
-#include "krisp-audio-sdk-ext.h"
+#include "krisp-voice-sdk.h"
 #include "krisp-audio-processor.h"
 #include "device_list.h"
 #include "gtest/gtest.h"
@@ -36,9 +36,9 @@ static_assert(0, "please rename conflicting macro");
 #endif
 #define DEVICE_LISTS_DIR PATH_JOIN(TEST_DATA_DIR, "device-lists")
 
-constexpr char allow_list_path[] = PATH_JOIN(DEVICE_LISTS_DIR, "allowlist.txt");
-constexpr char block_list_path[] = PATH_JOIN(DEVICE_LISTS_DIR, "blocklist.txt");
-constexpr char bad_list_path[] = PATH_JOIN(DEVICE_LISTS_DIR, "badlist.txt");
+constexpr char allowListPath[] = PATH_JOIN(DEVICE_LISTS_DIR, "allowlist.txt");
+constexpr char blockListPath[] = PATH_JOIN(DEVICE_LISTS_DIR, "blocklist.txt");
+constexpr char badListPath[] = PATH_JOIN(DEVICE_LISTS_DIR, "badlist.txt");
 
 #undef DEVICE_LISTS_DIR
 
@@ -56,7 +56,7 @@ constexpr wchar_t model_bvc_32k[] = L"" PATH_JOIN(MODELS_DIR, "model-bvc-32k.kw"
 #undef PATH_JOIN
 
 
-TEST(DeviceList, NoFileLoaded)
+TEST(InternalDeviceList, NoFileLoaded)
 {
 	using KrispVoiceSDK::KrispDeviceListError;
 	KrispVoiceSDK::DeviceList dev_list;
@@ -64,16 +64,16 @@ TEST(DeviceList, NoFileLoaded)
 	EXPECT_THROW(dev_list.add(device_1), KrispDeviceListError);
 	EXPECT_EQ(dev_list.count(), 0);
 	EXPECT_FALSE(dev_list.remove(device_1));
-	EXPECT_FALSE(dev_list.is_in_the_list(device_1));
+	EXPECT_FALSE(dev_list.isInTheList(device_1));
 }
 
 constexpr char air_pods_pro_2[] = "  Apple Air Pods Pro 2 ";
 
-TEST(DeviceList, WithFileLoaded)
+TEST(InternalDeviceList, WithFileLoaded)
 {
 	{
 		KrispVoiceSDK::DeviceList dev_list;
-		EXPECT_NO_THROW(dev_list.create_empty_file(block_list_path));
+		EXPECT_NO_THROW(dev_list.createEmptyFile(blockListPath));
 		auto block_devices = {
 			"super device 1",
 			"super device 2",
@@ -89,7 +89,7 @@ TEST(DeviceList, WithFileLoaded)
 	}
 	{
 		KrispVoiceSDK::DeviceList dev_list;
-		EXPECT_NO_THROW(dev_list.create_empty_file(allow_list_path));
+		EXPECT_NO_THROW(dev_list.createEmptyFile(allowListPath));
 		auto allow_devices = {"cheap headset", "any headset"};
 		for (auto device : allow_devices)
 		{
@@ -99,30 +99,30 @@ TEST(DeviceList, WithFileLoaded)
 	}
 	KrispVoiceSDK::DeviceList dev_list;
 	std::string device_in_the_list = air_pods_pro_2;
-	ASSERT_NO_THROW(dev_list.load_from_file(block_list_path));
+	ASSERT_NO_THROW(dev_list.loadFromFile(blockListPath));
 	EXPECT_EQ(dev_list.count(), 5);
 	EXPECT_FALSE(dev_list.add(device_in_the_list));
 	EXPECT_EQ(dev_list.count(), 5);
-	EXPECT_TRUE(dev_list.is_in_the_list(device_in_the_list));
+	EXPECT_TRUE(dev_list.isInTheList(device_in_the_list));
 	EXPECT_TRUE(dev_list.remove(device_in_the_list));
-	EXPECT_FALSE(dev_list.is_in_the_list(device_in_the_list));
+	EXPECT_FALSE(dev_list.isInTheList(device_in_the_list));
 	EXPECT_EQ(dev_list.count(), 4);
 	EXPECT_TRUE(dev_list.add(device_in_the_list));
-	EXPECT_TRUE(dev_list.is_in_the_list(device_in_the_list));
+	EXPECT_TRUE(dev_list.isInTheList(device_in_the_list));
 	EXPECT_EQ(dev_list.count(), 5);
-	EXPECT_NO_THROW(dev_list.load_from_file(allow_list_path));
+	EXPECT_NO_THROW(dev_list.loadFromFile(allowListPath));
 	EXPECT_EQ(dev_list.count(), 2);
 }
 
-TEST(DeviceList, BadList)
+TEST(InternalDeviceList, BadList)
 {
 	KrispVoiceSDK::DeviceList dev_list;
 	std::string device_in_the_list = air_pods_pro_2;
-	EXPECT_NO_THROW(dev_list.load_from_file(bad_list_path));
+	EXPECT_NO_THROW(dev_list.loadFromFile(badListPath));
 	EXPECT_EQ(dev_list.count(), 6);
 }
 
-class Test : public ::testing::Test
+class InternalTest : public ::testing::Test
 {
 protected:
 	void SetUp() override
@@ -137,104 +137,105 @@ protected:
 };
 
 
-TEST_F(Test, Model)
+TEST_F(InternalTest, Model)
 {
 	using KrispVoiceSDK::ModelId;
 	KrispVoiceSDK::Model model;
 	const char given_name[] = "any name";
 	const char another_name[] = "another name";
 	EXPECT_TRUE(model.load(model_nc_8k, ModelId::MicNc8K, given_name));
-	EXPECT_TRUE(model.is_loaded());
-	EXPECT_STREQ(model.get_given_name().c_str(), given_name);
-	EXPECT_EQ(model.get_last_error().size(), 0);
+	EXPECT_TRUE(model.isLoaded());
+	EXPECT_STREQ(model.getGivenName().c_str(), given_name);
+	EXPECT_EQ(model.getLastError().size(), 0);
 	EXPECT_FALSE(model.load(model_nc_16k, ModelId::MicNc16K, another_name));
-	EXPECT_GT(model.get_last_error().size(), 0);
-	EXPECT_TRUE(model.has_error());
-	EXPECT_GT(model.pull_last_error().size(), 0);
-	EXPECT_FALSE(model.has_error());
+	EXPECT_GT(model.getLastError().size(), 0);
+	EXPECT_TRUE(model.hasError());
+	EXPECT_GT(model.pullLastError().size(), 0);
+	EXPECT_FALSE(model.hasError());
 	EXPECT_TRUE(model.unload());
-	EXPECT_FALSE(model.is_loaded());
-	EXPECT_FALSE(model.has_error());
+	EXPECT_FALSE(model.isLoaded());
+	EXPECT_FALSE(model.hasError());
 	EXPECT_TRUE(model.load(model_nc_16k, ModelId::MicNc16K, another_name));
-	EXPECT_TRUE(model.is_loaded());
-	EXPECT_STREQ(model.get_given_name().c_str(), another_name);
-	EXPECT_FALSE(model.has_error());
-	EXPECT_EQ(model.get_last_error().size(), 0);
+	EXPECT_TRUE(model.isLoaded());
+	EXPECT_STREQ(model.getGivenName().c_str(), another_name);
+	EXPECT_FALSE(model.hasError());
+	EXPECT_EQ(model.getLastError().size(), 0);
 	EXPECT_TRUE(model.unload());
-	EXPECT_FALSE(model.is_loaded());
+	EXPECT_FALSE(model.isLoaded());
 }
 
-TEST_F(Test, ModelContainer)
+TEST_F(InternalTest, ModelContainer)
 {
 	using KrispVoiceSDK::KrispException;
+	using KrispVoiceSDK::ModelId;
 	const unsigned model_count = 3;
 	std::array<const wchar_t *, model_count> models_path =
 		{model_nc_8k, model_nc_16k, model_nc_32k};
 	KrispVoiceSDK::ModelContainer<model_count> container;
-	EXPECT_EQ(container.get_model_count(), model_count);
-	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	EXPECT_EQ(container.getModelCount(), model_count);
+	for (unsigned id = 0; id < container.getModelCount(); ++id)
 	{
-		EXPECT_FALSE(container.is_model_registered(id));
+		EXPECT_FALSE(container.isModelRegistered(ModelId(id)));
 	}
-	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	for (unsigned id = 0; id < container.getModelCount(); ++id)
 	{
-		EXPECT_NO_THROW(container.registerModel(id, models_path[id]));
+		EXPECT_NO_THROW(container.registerModel(ModelId(id), models_path[id]));
 	}
-	EXPECT_THROW(container.registerModel(3, model_bvc_32k), KrispException);
-	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	EXPECT_THROW(container.registerModel(ModelId(3), model_bvc_32k), KrispException);
+	for (unsigned id = 0; id < container.getModelCount(); ++id)
 	{
-		EXPECT_NO_THROW(container.is_model_registered(id));
+		EXPECT_NO_THROW(container.isModelRegistered(ModelId(id)));
 	}
-	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	for (unsigned id = 0; id < container.getModelCount(); ++id)
 	{
-		EXPECT_NO_THROW(container.preloadModel(id));
+		EXPECT_NO_THROW(container.preloadModel(ModelId(id)));
 	}
-	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	for (unsigned id = 0; id < container.getModelCount(); ++id)
 	{
-		auto model_shared_ptr = container.get_model(id);
+		auto model_shared_ptr = container.getModel(ModelId(id));
 		EXPECT_NE(model_shared_ptr.get(), nullptr);
 		EXPECT_EQ(model_shared_ptr.use_count(), 2);
 	}
-	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	for (unsigned id = 0; id < container.getModelCount(); ++id)
 	{
-		EXPECT_NO_THROW(container.disable_model_ownership(id));
+		EXPECT_NO_THROW(container.disableModelOwnership(ModelId(id)));
 	}
 	{
 		std::array<std::shared_ptr<KrispVoiceSDK::Model>, model_count> models;
-		for (unsigned id = 0; id < container.get_model_count(); ++id)
+		for (unsigned id = 0; id < container.getModelCount(); ++id)
 		{
-			auto model_shared_ptr = container.get_model(id);
+			auto model_shared_ptr = container.getModel(ModelId(id));
 			EXPECT_NE(model_shared_ptr.get(), nullptr);
 			EXPECT_EQ(model_shared_ptr.use_count(), 1);
 			models[id] = model_shared_ptr;
 		}
-		for (unsigned id = 0; id < container.get_model_count(); ++id)
+		for (unsigned id = 0; id < container.getModelCount(); ++id)
 		{
-			auto model_shared_ptr = container.get_model(id);
+			auto model_shared_ptr = container.getModel(ModelId(id));
 			EXPECT_NE(model_shared_ptr.get(), nullptr);
 			EXPECT_EQ(model_shared_ptr.use_count(), 2);
 		}
 	}
 	{
-		for (unsigned id = 0; id < container.get_model_count(); ++id)
+		for (unsigned id = 0; id < container.getModelCount(); ++id)
 		{
-			auto model_shared_ptr = container.get_model(id);
+			auto model_shared_ptr = container.getModel(ModelId(id));
 			EXPECT_NE(model_shared_ptr.get(), nullptr);
 			EXPECT_EQ(model_shared_ptr.use_count(), 1);
 		}
 	}
-	for (unsigned id = 0; id < container.get_model_count(); ++id)
+	for (unsigned id = 0; id < container.getModelCount(); ++id)
 	{
-		EXPECT_NO_THROW(container.enable_model_ownership(id));
+		EXPECT_NO_THROW(container.enableModelOwnership(ModelId(id)));
 	}
 }
 
-TEST_F(Test, AudioProcessorBuilder)
+TEST_F(InternalTest, AudioProcessorBuilder)
 {
 	KrispVoiceSDK::AudioProcessorBuilder builder;
 	using ModelId = KrispVoiceSDK::ModelId;
 	using SamplingRate = KrispVoiceSDK::SamplingRate;
-	EXPECT_NO_THROW(builder.load_device_lists(allow_list_path, block_list_path));
+	EXPECT_NO_THROW(builder.accessBvcDeviceManager().loadLists(allowListPath, blockListPath));
 	EXPECT_NO_THROW(builder.registerModel(ModelId::MicNc8K, model_nc_8k));
 	EXPECT_NO_THROW(builder.registerModel(ModelId::MicNc16K, model_nc_16k));
 	EXPECT_NO_THROW(builder.registerModel(ModelId::MicNc32K, model_nc_32k));
@@ -244,6 +245,20 @@ TEST_F(Test, AudioProcessorBuilder)
 	auto audio_cleaner_2_ptr = builder.createNc(SamplingRate::Sr8000);
 	EXPECT_NE(audio_cleaner_2_ptr.get(), nullptr);
 	EXPECT_NE(audio_cleaner_ptr.get(), audio_cleaner_2_ptr.get());
+	auto audio_cleaner_3_ptr = builder.createNc(SamplingRate::Sr16000, ModelId::MicNc16K);
+	EXPECT_NE(audio_cleaner_3_ptr.get(), nullptr);
+}
+
+TEST(ClientCode, BvcDeviceLists)
+{
+	using KrispVoiceSDK::loadBvcDeviceLists;
+	using KrispVoiceSDK::KrispDeviceListError;
+
+	EXPECT_THROW(loadBvcDeviceLists("a", "b"), KrispDeviceListError);
+	EXPECT_THROW(loadBvcDeviceLists(allowListPath, "b"), KrispDeviceListError);
+	EXPECT_THROW(loadBvcDeviceLists("a", blockListPath), KrispDeviceListError);
+	EXPECT_NO_THROW(loadBvcDeviceLists(allowListPath, blockListPath));
+	EXPECT_NO_THROW(loadBvcDeviceLists(allowListPath, badListPath));
 }
 
 }

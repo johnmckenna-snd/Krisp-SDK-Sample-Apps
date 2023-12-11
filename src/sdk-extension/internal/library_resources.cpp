@@ -2,38 +2,37 @@
 
 #include <krisp-audio-sdk.hpp>
 
-
 namespace KrispVoiceSDK
 {
 
 LibraryResources::LibraryResources()
 {
-	int result = krispAudioGlobalInit(L"");
-	if (result != 0)
-	{
-		// error
-	}
+    int result = krispAudioGlobalInit(L"");
+    if (result != 0)
+    {
+        // error
+    }
 }
 
 LibraryResources::~LibraryResources()
 {
-	int result = krispAudioGlobalDestroy();
-	if (result != 0)
-	{
-		// error
-	}
+    int result = krispAudioGlobalDestroy();
+    if (result != 0)
+    {
+        // error
+    }
 }
 
-std::shared_ptr<LibraryResources> get_library()
+std::shared_ptr<LibraryResources> getLibrary()
 {
-	static std::weak_ptr<LibraryResources> weak_ptr;
-	if (weak_ptr.expired())
-	{
-		auto shared_ptr = std::make_shared<LibraryResources>();
-		weak_ptr = shared_ptr;
-		return shared_ptr;
-	}
-	return weak_ptr.lock();
+    static std::weak_ptr<LibraryResources> weak_ptr;
+    if (weak_ptr.expired())
+    {
+        auto sharedPtr = std::make_shared<LibraryResources>();
+        weak_ptr = sharedPtr;
+        return sharedPtr;
+    }
+    return weak_ptr.lock();
 }
 
-}
+} // namespace KrispVoiceSDK

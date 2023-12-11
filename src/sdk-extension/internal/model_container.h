@@ -1,41 +1,41 @@
 #pragma once
 
 #include <cassert>
-#include <string>
 #include <memory>
+#include <string>
 
+#include "krisp-enums.h"
 #include "model.h"
-
 
 namespace KrispVoiceSDK
 {
-
 
 template <unsigned long ModelCount>
 class ModelContainer
 {
 public:
-	void registerModel(unsigned long id, const std::wstring & path);
-	void registerModel(unsigned long id, void * blob_addr, size_t blob_size);
-	void unregisterModel(unsigned long id);
-	bool is_model_registered(unsigned long id);
-	void preloadModel(unsigned long id);
-	void enable_model_ownership(unsigned long id);
-	void disable_model_ownership(unsigned long id);
-	std::shared_ptr<Model> get_model(unsigned long id);
-	static constexpr unsigned long get_model_count();
+    void registerModel(ModelId id, const std::wstring& path);
+    void registerModel(ModelId id, void* blobAddr, size_t blobSize);
+    void unregisterModel(ModelId id);
+    bool isModelRegistered(ModelId id);
+    void preloadModel(ModelId id);
+    void enableModelOwnership(ModelId id);
+    void disableModelOwnership(ModelId id);
+    std::shared_ptr<Model> getModel(ModelId id);
+    static constexpr unsigned long getModelCount();
 
 private:
-	struct ModelData
-	{
-		std::wstring m_path;
-		void * m_blob_addr = nullptr;
-		size_t m_blob_size = 0;
-		std::shared_ptr<Model> m_owning_ref;
-		std::weak_ptr<Model> m_weak_ref;
-		bool m_keep_ownership = true;
-	};
-	std::array<ModelData, ModelCount> m_models_data;
+    struct ModelData
+    {
+        std::wstring _path;
+        void* _blobAddr = nullptr;
+        size_t _blobSize = 0;
+        std::shared_ptr<Model> _owningRef;
+        std::weak_ptr<Model> _weakRef;
+        bool _keepOwnership = true;
+    };
+    ModelData& accessModelData(ModelId id);
+    std::array<ModelData, ModelCount> _modelsData;
 };
 
-}
+} // namespace KrispVoiceSDK

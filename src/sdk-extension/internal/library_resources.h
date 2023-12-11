@@ -13,6 +13,6 @@ public:
 	~LibraryResources();
 };
 
-std::shared_ptr<LibraryResources> get_library();
+std::shared_ptr<LibraryResources> getLibrary();
 
 }

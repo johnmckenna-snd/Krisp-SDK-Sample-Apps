@@ -9,23 +9,23 @@
 #include "sound_file.hpp"
 
 #include "krisp-exception.h"
-#include "krisp-audio-sdk-ext.h"
+#include "krisp-voice-sdk.h"
 
 
 std::pair<bool, std::string> WriteFramesToFile(
 	const std::string &fileName,
 	const std::vector<int16_t> &frames,
-	unsigned samplingRate)
+	KrispVoiceSDK::SamplingRate samplingRate)
 {
-	return writeSoundFilePCM16(fileName, frames, samplingRate);
+	return writeSoundFilePCM16(fileName, frames, static_cast<unsigned>(samplingRate));
 }
 
 std::pair<bool, std::string> WriteFramesToFile(
 	const std::string &fileName,
 	const std::vector<float> &frames,
-	unsigned samplingRate)
+	KrispVoiceSDK::SamplingRate samplingRate)
 {
-	return writeSoundFileFloat(fileName, frames, samplingRate);
+	return writeSoundFileFloat(fileName, frames, static_cast<unsigned>(samplingRate));
 }
 
 template <typename T>

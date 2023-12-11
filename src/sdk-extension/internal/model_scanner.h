@@ -3,16 +3,15 @@
 #include <string>
 #include <vector>
 
-#include "krisp-audio-sdk-ext.h"
 #include "audio_processor_builder.h"
-
+#include "krisp-voice-sdk.h"
 
 namespace KrispVoiceSDK
 {
 
-std::vector<ModelId> get_models_from_directory(
-    AudioProcessorBuilder &factory,
-    const std::string &directory,
-    const ModelNameToIdMap &name_to_id_map);
+std::vector<ModelId> GetModelsFromDirectory(
+    AudioProcessorBuilder& factory,
+    const std::string& directory,
+    const ModelNameToIdMap& nameToIdMap);
 
 }

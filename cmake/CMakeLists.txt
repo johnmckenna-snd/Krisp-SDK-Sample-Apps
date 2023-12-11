@@ -51,12 +51,6 @@ add_executable(
 
 add_executable(
 	${APPNAME_SDK_EXT_TEST}
-	${ROOT_DIR}/src/sdk-extension/internal/library_resources.cpp
-	${ROOT_DIR}/src/sdk-extension/internal/bvc_device_manager.cpp
-	${ROOT_DIR}/src/sdk-extension/internal/device_list.cpp
-	${ROOT_DIR}/src/sdk-extension/internal/model.cpp
-	${ROOT_DIR}/src/sdk-extension/internal/audio_cleaner.cpp
-	${ROOT_DIR}/src/sdk-extension/internal/audio_processor_builder.cpp
 	${ROOT_DIR}/src/sdk-extension-test/unit_test_device_list.cpp
 )
 
@@ -76,7 +70,7 @@ add_library(
 	${ROOT_DIR}/src/sdk-extension/internal/model_scanner.cpp
 	${ROOT_DIR}/src/sdk-extension/internal/audio_cleaner.cpp
 	${ROOT_DIR}/src/sdk-extension/internal/audio_processor_builder.cpp
-	${ROOT_DIR}/src/sdk-extension/internal/krisp_audio_sdk_ext.cpp
+	${ROOT_DIR}/src/sdk-extension/internal/krisp_voice_sdk.cpp
 )
 
 add_executable(
@@ -185,6 +179,7 @@ target_link_libraries(
 	${LIBRESAMPLE_ABSPATH}
 	${LIBGTEST_ABSPATH}
 	${LIBGTEST_MAIN_ABSPATH}
+	${SDKEXT}
 )
 
 # Blas libraries are applied to ${APPNAME_NC} target

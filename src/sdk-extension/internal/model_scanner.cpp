@@ -1,114 +1,113 @@
 #include <dirent.h>
 
-#include <locale>
 #include <codecvt>
+#include <locale>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
-
-#include "krisp-exception.h"
-#include "krisp-audio-sdk-ext.h"
 #include "audio_processor_builder.h"
-
+#include "krisp-exception.h"
+#include "krisp-voice-sdk.h"
 
 namespace KrispVoiceSDK
 {
 
-
 class ModelCollectorFromDirectory
 {
 public:
-	explicit ModelCollectorFromDirectory(
-		const std::initializer_list<std::pair<const char *, ModelId>> & models_name_to_id)
-		: m_models_name_to_id(), m_models_id_to_path()
-	{
-		for (auto name_to_id : models_name_to_id)
-		{
-			m_models_name_to_id.insert(name_to_id);
-		}
-	}
+    explicit ModelCollectorFromDirectory(
+        const std::initializer_list<std::pair<const char*, ModelId>>&
+            modelsNameToId)
+        : _modelsNameToId(), _modelsIdToPath()
+    {
+        for (auto nameToId : modelsNameToId)
+        {
+            _modelsNameToId.insert(nameToId);
+        }
+    }
 
-	void clear()
-	{
-		m_models_id_to_path.clear();
-	}
+    void clear()
+    {
+        _modelsIdToPath.clear();
+    }
 
-	void scan_directory(const std::string & directory)
-	{
+    void scanDirectory(const std::string& directory)
+    {
 #ifdef WIN32
-		constexpr char path_separator[] = "\\";
+        constexpr char pathSeparator[] = "\\";
 #else
-		constexpr char path_separator[] = "/";
+        constexpr char pathSeparator[] = "/";
 #endif
-		DIR * dir = ::opendir(directory.c_str());
-		if (!dir)
-		{
-			throw KrispModelScannerError("Can't access " + directory + ".");
-		}
-		struct dirent * dir_item = nullptr;
-		unsigned models_found = 0;
-		while (true)
-		{
-			dir_item = ::readdir(dir);
-			if (!dir_item)
-			{
-				break;
-			}
-			if (dir_item->d_type != DT_REG)
-			{
-				continue;
-			}
-			auto file_name = std::string(dir_item->d_name, dir_item->d_namlen);
-			auto it_mic_model = m_models_name_to_id.find(file_name);
-			if (it_mic_model != m_models_name_to_id.end())
-			{
-				auto model_file_name = it_mic_model->first;
-				auto model_id = it_mic_model->second;
-				std::string path = directory + path_separator + model_file_name;
-				m_models_id_to_path[model_id] = path;
-				++models_found;
-			}
-		}
-		::closedir(dir);
-		if (!models_found)
-		{
-			throw KrispModelScannerError("No models found in " + directory + ".");
-		}
-	}
+        DIR* dir = ::opendir(directory.c_str());
+        if (!dir)
+        {
+            throw KrispModelScannerError("Can't access " + directory + ".");
+        }
+        struct dirent* dirItem = nullptr;
+        unsigned modelsFound = 0;
+        while (true)
+        {
+            dirItem = ::readdir(dir);
+            if (!dirItem)
+            {
+                break;
+            }
+            if (dirItem->d_type != DT_REG)
+            {
+                continue;
+            }
+            auto fileName = std::string(dirItem->d_name, dirItem->d_namlen);
+            auto itMicModel = _modelsNameToId.find(fileName);
+            if (itMicModel != _modelsNameToId.end())
+            {
+                auto modelFileName = itMicModel->first;
+                auto modelId = itMicModel->second;
+                std::string path = directory + pathSeparator + modelFileName;
+                _modelsIdToPath[modelId] = path;
+                ++modelsFound;
+            }
+        }
+        ::closedir(dir);
+        if (!modelsFound)
+        {
+            throw KrispModelScannerError(
+                "No models found in " + directory + ".");
+        }
+    }
 
-	using ModelId = KrispVoiceSDK::ModelId;
+    using ModelId = KrispVoiceSDK::ModelId;
 
-	const std::map<ModelId, std::string> & get_mic_models_paths() const
-	{
-		return m_models_id_to_path;
-	}
+    const std::map<ModelId, std::string>& getMicModelsPaths() const
+    {
+        return _modelsIdToPath;
+    }
 
 private:
-	std::map<std::string, ModelId> m_models_name_to_id;
-	std::map<ModelId, std::string> m_models_id_to_path;
+    std::map<std::string, ModelId> _modelsNameToId;
+    std::map<ModelId, std::string> _modelsIdToPath;
 };
 
-
-std::vector<ModelId> get_models_from_directory(AudioProcessorBuilder & builder,
-	const std::string & directory,
-	const ModelNameToIdMap & model_name_to_id_map)
+std::vector<ModelId> GetModelsFromDirectory(
+    AudioProcessorBuilder& builder,
+    const std::string& directory,
+    const ModelNameToIdMap& modelNameToIdMap)
 {
-	std::vector<ModelId> found_models;
-	ModelCollectorFromDirectory model_collector(model_name_to_id_map);
-	model_collector.scan_directory(directory);
-	found_models.reserve(8);
-	auto mic_models = model_collector.get_mic_models_paths();
-	for (auto model_id_and_path : mic_models)
-	{
-		auto model_id = model_id_and_path.first;
-		auto model_path = model_id_and_path.second;
-		found_models.push_back(model_id);
-		std::wstring_convert<std::codecvt_utf8<wchar_t>> wstringConverter;
-		std::wstring model_wpath = wstringConverter.from_bytes(model_path);
-		builder.registerModel(model_id, model_wpath);
-	}
-	return found_models;
+    std::vector<ModelId> foundModels;
+    ModelCollectorFromDirectory modelCollector(modelNameToIdMap);
+    modelCollector.scanDirectory(directory);
+    foundModels.reserve(8);
+    auto micModels = modelCollector.getMicModelsPaths();
+    for (auto modelIdAndPath : micModels)
+    {
+        auto modelId = modelIdAndPath.first;
+        auto modelPath = modelIdAndPath.second;
+        foundModels.push_back(modelId);
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> wstringConverter;
+        std::wstring modelWpath = wstringConverter.from_bytes(modelPath);
+        builder.registerModel(modelId, modelWpath);
+    }
+    return foundModels;
 }
 
-}
+} // namespace KrispVoiceSDK

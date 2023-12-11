@@ -6,108 +6,113 @@
 namespace KrispVoiceSDK
 {
 
-Model::Model() : m_given_name(), m_last_error(), m_loaded(false), m_library_ptr()
+Model::Model() : _givenName(), _lastError(), _loaded(false), _libraryPtr()
 {
 }
 
 Model::~Model()
 {
-	unload();
+    unload();
 }
 
-bool Model::load(const std::wstring &path, ModelId model_id, const std::string &given_name)
+bool Model::load(
+    const std::wstring& path, ModelId modelId, const std::string& givenName)
 {
-	if (m_loaded)
-	{
-		m_last_error = "Please use Model::unload() first to unload the model.";
-		return false;
-	}
-	if (!m_library_ptr.get())
-	{
-		m_library_ptr = get_library();
-	}
-	int result = krispAudioSetModel(path.c_str(), given_name.c_str());
-	if (result != 0)
-	{
-		m_last_error = "Failed to load the model";
-		m_library_ptr.reset();
-		return false;
-	}
-	m_loaded = true;
-	m_id = model_id;
-	m_given_name = given_name;
-	return true;
+    if (_loaded)
+    {
+        _lastError = "Please use Model::unload() first to unload the model.";
+        return false;
+    }
+    if (!_libraryPtr.get())
+    {
+        _libraryPtr = getLibrary();
+    }
+    int result = krispAudioSetModel(path.c_str(), givenName.c_str());
+    if (result != 0)
+    {
+        _lastError = "Failed to load the model";
+        _libraryPtr.reset();
+        return false;
+    }
+    _loaded = true;
+    _id = modelId;
+    _givenName = givenName;
+    return true;
 }
 
-bool Model::load(void *blob_ptr, size_t blob_size, ModelId model_id, const std::string &given_name)
+bool Model::load(
+    void* blobPtr,
+    size_t blobSize,
+    ModelId modelId,
+    const std::string& givenName)
 {
-	if (m_loaded)
-	{
-		m_last_error = "Please use Model::unload() first to unload the model.";
-		return false;
-	}
-	if (!m_library_ptr)
-	{
-		m_library_ptr = get_library();
-	}
-	int result = krispAudioSetModelBlob(blob_ptr, blob_size, given_name.c_str());
-	if (result != 0)
-	{
-		m_last_error = "Failed to load the model";
-		m_library_ptr.reset();
-		return false;
-	}
-	m_loaded = true;
-	m_id = model_id;
-	m_given_name = given_name;
-	return true;
+    if (_loaded)
+    {
+        _lastError = "Please use Model::unload() first to unload the model.";
+        return false;
+    }
+    if (!_libraryPtr)
+    {
+        _libraryPtr = getLibrary();
+    }
+    int result = krispAudioSetModelBlob(blobPtr, blobSize, givenName.c_str());
+    if (result != 0)
+    {
+        _lastError = "Failed to load the model";
+        _libraryPtr.reset();
+        return false;
+    }
+    _loaded = true;
+    _id = modelId;
+    _givenName = givenName;
+    return true;
 }
 
 bool Model::unload()
 {
-	if (m_loaded)
-	{
-		int result = krispAudioRemoveModel(m_given_name.c_str());
-		if (result != 0)
-		{
-			return false;
-		}
-		m_given_name.clear();
-		m_loaded = false;
-		m_library_ptr.reset();
-		return true;
-	}
-	return false;
+    if (_loaded)
+    {
+        int result = krispAudioRemoveModel(_givenName.c_str());
+        if (result != 0)
+        {
+            return false;
+        }
+        _givenName.clear();
+        _loaded = false;
+        _libraryPtr.reset();
+        return true;
+    }
+    return false;
 }
 
-ModelId Model::get_id() const
+ModelId Model::getId() const
 {
-	return m_id;
+    return _id;
 }
 
-std::string Model::get_given_name() const
+std::string Model::getGivenName() const
 {
-	return m_given_name;
+    return _givenName;
 }
 
-bool Model::is_loaded() const
+bool Model::isLoaded() const
 {
-	return m_loaded;
+    return _loaded;
 }
 
-const std::string &Model::get_last_error() const
+const std::string& Model::getLastError() const
 {
-	return m_last_error;
+    return _lastError;
 }
 
-bool Model::has_error() const
+bool Model::hasError() const
 {
-	return m_last_error.size() ? true : false;
+    return _lastError.size() ? true : false;
 }
 
-std::string Model::pull_last_error()
+std::string Model::pullLastError()
 {
-	return std::move(m_last_error);
+    return std::move(_lastError);
 }
 
-}
+} // namespace KrispVoiceSDK

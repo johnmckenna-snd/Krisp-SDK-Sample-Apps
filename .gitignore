@@ -3,3 +3,4 @@ build/**
 build-googletest/**
 .vscode/**
 **/.DS_Store
+.clang-format
