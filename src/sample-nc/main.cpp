@@ -348,7 +348,7 @@ int main(int argc, char** argv) {
 		return ncWavFile(in, out, weight, ratio, stats);
 	} else {
 		std::cerr << "\nUsage:\n\t" << argv[0]
-			<< " -i input.wav -o output.wav -w weightFile" << std::endl;
+			<< " -i input.wav -o output.wav -w weightFile -r ratio 0-100" << std::endl;
 		if (argc == 1) {
 			return 0;
 		}
