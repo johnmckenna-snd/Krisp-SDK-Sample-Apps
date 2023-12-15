@@ -9,17 +9,9 @@ namespace KrispVoiceSdk
 
 class KrispException : public std::exception
 {
-
 public:
-    KrispException(const std::string& err_msg) : m_error_msg(err_msg)
-    {
-    }
-
-    virtual const char* what() const noexcept override
-    {
-        return m_error_msg.c_str();
-    }
-
+    KrispException(const std::string& err_msg);
+    virtual const char* what() const noexcept override;
 private:
     std::string m_error_msg;
 };
@@ -27,33 +19,25 @@ private:
 class KrispModelLoadError : public KrispException
 {
 public:
-    KrispModelLoadError(const std::string& err_msg) : KrispException(err_msg)
-    {
-    }
+    KrispModelLoadError(const std::string& err_msg);
 };
 
 class KrispModelSelectionError : public KrispException
 {
 public:
-    KrispModelSelectionError(const std::string& err_msg) : KrispException(err_msg)
-    {
-    }
+    KrispModelSelectionError(const std::string& err_msg);
 };
 
 class KrispDeviceListError : public KrispException
 {
 public:
-    KrispDeviceListError(const std::string& err_msg) : KrispException(err_msg)
-    {
-    }
+    KrispDeviceListError(const std::string& err_msg);
 };
 
 class KrispModelScannerError : public KrispException
 {
 public:
-    KrispModelScannerError(const std::string& err_msg) : KrispException(err_msg)
-    {
-    }
+    KrispModelScannerError(const std::string& err_msg);
 };
 
 } // namespace KrispVoiceSDK

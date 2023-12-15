@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-#include "krisp-enums.h"
 #include "model.h"
 
 namespace KrispVoiceSdk

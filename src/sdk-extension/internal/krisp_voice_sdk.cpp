@@ -1,4 +1,5 @@
 #include "krisp-voice-sdk.h"
+#include "krisp-exception.h"
 
 #include <memory>
 
@@ -7,6 +8,32 @@
 
 namespace KrispVoiceSdk
 {
+
+
+KrispException::KrispException(const std::string& err_msg) : m_error_msg(err_msg)
+{
+}
+
+const char* KrispException::what() const noexcept
+{
+    return m_error_msg.c_str();
+}
+
+KrispModelLoadError::KrispModelLoadError(const std::string& err_msg) : KrispException(err_msg)
+{
+}
+
+KrispModelSelectionError::KrispModelSelectionError(const std::string& err_msg) : KrispException(err_msg)
+{
+}
+
+KrispDeviceListError::KrispDeviceListError(const std::string& err_msg) : KrispException(err_msg)
+{
+}
+
+KrispModelScannerError::KrispModelScannerError(const std::string& err_msg) : KrispException(err_msg)
+{
+}
 
 NoiseCleaner::NoiseCleaner(ModelId model_id) : _modelId(model_id)
 {
