@@ -3,7 +3,7 @@
 #include <set>
 #include <string>
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 class DeviceList

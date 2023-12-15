@@ -7,7 +7,7 @@
 
 #include "krisp-exception.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 struct FileOpener final

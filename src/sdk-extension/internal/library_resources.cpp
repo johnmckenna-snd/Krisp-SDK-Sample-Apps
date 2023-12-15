@@ -2,7 +2,7 @@
 
 #include <krisp-audio-sdk.hpp>
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 LibraryResources::LibraryResources()
@@ -25,14 +25,14 @@ LibraryResources::~LibraryResources()
 
 std::shared_ptr<LibraryResources> getLibrary()
 {
-    static std::weak_ptr<LibraryResources> weak_ptr;
-    if (weak_ptr.expired())
+    static std::weak_ptr<LibraryResources> weakPtr;
+    if (weakPtr.expired())
     {
         auto sharedPtr = std::make_shared<LibraryResources>();
-        weak_ptr = sharedPtr;
+        weakPtr = sharedPtr;
         return sharedPtr;
     }
-    return weak_ptr.lock();
+    return weakPtr.lock();
 }
 
 } // namespace KrispVoiceSDK

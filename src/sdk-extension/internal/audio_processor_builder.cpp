@@ -11,7 +11,7 @@
 
 #include "model_container_impl.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 AudioProcessorBuilder::AudioProcessorBuilder()
@@ -119,7 +119,7 @@ std::shared_ptr<Model> AudioProcessorBuilder::chooseModel(
         "No suitable model is registered for 32KHz and above sampling rates.");
 }
 
-std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createNc(SamplingRate r)
+std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createNc(SamplingRate r)
 {
     constexpr bool tryBvc = false;
     auto modelPtr = this->chooseModel("", r, tryBvc);
@@ -130,7 +130,7 @@ std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createNc(SamplingRate r)
     return std::make_unique<AudioCleaner>(modelPtr, r);
 }
 
-std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createNc(
+std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createNc(
     SamplingRate r, ModelId model_id)
 {
     auto modelPtr = this->getModel(model_id);
@@ -142,7 +142,7 @@ std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createNc(
     return std::make_unique<AudioCleaner>(modelPtr, r);
 }
 
-std::unique_ptr<AudioProcessor> AudioProcessorBuilder::createBvc(
+std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createBvc(
     SamplingRate r, const std::string& device)
 {
     constexpr bool tryBvc = true;

@@ -5,7 +5,7 @@
 #include "krisp-voice-sdk.h"
 #include "library_resources.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 class Model final

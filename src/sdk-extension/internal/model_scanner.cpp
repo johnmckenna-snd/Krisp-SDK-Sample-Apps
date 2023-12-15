@@ -6,11 +6,12 @@
 #include <string>
 #include <vector>
 
+#include "krisp-voice-sdk.h"
+#include "model_scanner.h"
 #include "audio_processor_builder.h"
 #include "krisp-exception.h"
-#include "krisp-voice-sdk.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 class ModelCollectorFromDirectory
@@ -75,8 +76,6 @@ public:
                 "No models found in " + directory + ".");
         }
     }
-
-    using ModelId = KrispVoiceSDK::ModelId;
 
     const std::map<ModelId, std::string>& getMicModelsPaths() const
     {

@@ -4,12 +4,12 @@
 #include <krisp-audio-sdk-nc.hpp>
 #include <krisp-audio-sdk.hpp>
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 AudioCleaner::AudioCleaner(
     const std::shared_ptr<Model>& model_ptr, SamplingRate r)
-    : AudioProcessor(model_ptr->getId())
+    : NoiseCleaner(model_ptr->getId())
     , _modelPtr(model_ptr)
     , _krispSessionId(nullptr)
     , _samplingRate(r)
@@ -35,7 +35,7 @@ AudioCleaner::~AudioCleaner()
 }
 
 AudioCleaner::AudioCleaner(const AudioCleaner& copy)
-    : AudioProcessor(copy)
+    : NoiseCleaner(copy)
     , _modelPtr(copy._modelPtr)
     , _krispSessionId(nullptr)
     , _samplingRate(copy._samplingRate)
@@ -85,7 +85,7 @@ size_t AudioCleaner::implGetFrameSize() const
 
 AudioCleanerWithStats::AudioCleanerWithStats(
     const std::shared_ptr<Model>& model_ptr, SamplingRate r)
-    : AudioNoiseCleanerWithStats(model_ptr->getId())
+    : NoiseCleanerWithStats(model_ptr->getId())
     , _modelPtr(model_ptr)
     , _krispSessionId(nullptr)
     , _samplingRate(r)
@@ -104,7 +104,7 @@ AudioCleanerWithStats::AudioCleanerWithStats(
 }
 
 AudioCleanerWithStats::AudioCleanerWithStats(const AudioCleanerWithStats& copy)
-    : AudioNoiseCleanerWithStats(copy._modelPtr->getId())
+    : NoiseCleanerWithStats(copy._modelPtr->getId())
     , _modelPtr(copy._modelPtr)
     , _krispSessionId(nullptr)
     , _samplingRate(copy._samplingRate)
@@ -123,7 +123,6 @@ AudioCleanerWithStats::AudioCleanerWithStats(const AudioCleanerWithStats& copy)
 AudioCleanerWithStats& AudioCleanerWithStats::operator=(
     const AudioCleanerWithStats& copy)
 {
-    _modelId = copy._modelId;
     _modelPtr = copy._modelPtr;
     _krispSessionId = nullptr;
     _samplingRate = copy._samplingRate;
@@ -142,7 +141,7 @@ AudioCleanerWithStats& AudioCleanerWithStats::operator=(
 }
 
 AudioCleanerWithStats::AudioCleanerWithStats(AudioCleanerWithStats&& copy)
-    : AudioNoiseCleanerWithStats(copy._modelPtr->getId())
+    : NoiseCleanerWithStats(copy._modelPtr->getId())
     , _modelPtr(std::move(copy._modelPtr))
     , _krispSessionId(copy._krispSessionId)
     , _samplingRate(copy._samplingRate)
@@ -157,7 +156,6 @@ AudioCleanerWithStats::AudioCleanerWithStats(AudioCleanerWithStats&& copy)
 AudioCleanerWithStats& AudioCleanerWithStats::operator=(
     AudioCleanerWithStats&& copy)
 {
-    _modelId = copy._modelId;
     _modelPtr = std::move(copy._modelPtr);
     _krispSessionId = copy._krispSessionId;
     copy._krispSessionId = nullptr;

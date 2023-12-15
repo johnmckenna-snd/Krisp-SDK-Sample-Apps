@@ -4,13 +4,12 @@
 
 #include <krisp-audio-sdk.hpp>
 
-#include "krisp-audio-processor.h"
 #include "model.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
-class AudioCleaner : public AudioProcessor
+class AudioCleaner : public NoiseCleaner
 {
 public:
     AudioCleaner(const std::shared_ptr<Model>& model_ptr, SamplingRate r);
@@ -35,7 +34,7 @@ private:
     size_t implGetFrameSize() const override;
 };
 
-class AudioCleanerWithStats : public AudioNoiseCleanerWithStats
+class AudioCleanerWithStats : public NoiseCleanerWithStats
 {
 public:
     AudioCleanerWithStats(

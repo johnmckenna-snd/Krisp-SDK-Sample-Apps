@@ -2,7 +2,7 @@
 
 #include "device_list.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 class BVCDeviceManager

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <krisp-audio-sdk.hpp>
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 Model::Model() : _givenName(), _lastError(), _loaded(false), _libraryPtr()

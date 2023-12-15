@@ -1,106 +1,194 @@
 #include "krisp-voice-sdk.h"
 
+#include <memory>
+
 #include "audio_processor_builder.h"
 #include "model_scanner.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
-AudioProcessorBuilder* builder_ptr = nullptr;
-
-AudioProcessorBuilder* getBuilder()
+NoiseCleaner::NoiseCleaner(ModelId model_id) : _modelId(model_id)
 {
-    if (!builder_ptr)
+}
+
+NoiseCleaner::~NoiseCleaner()
+{
+}
+
+NoiseCleaner::NoiseCleaner(const NoiseCleaner&) = default;
+NoiseCleaner& NoiseCleaner::operator=(const NoiseCleaner&) = default;
+
+bool NoiseCleaner::processFrame(
+    const short* frame10MsInPtr, short* frame10MsOutPtr)
+{
+    return implProcessFramePcm16(frame10MsInPtr, frame10MsOutPtr);
+}
+
+bool NoiseCleaner::processFrame(
+    const float* frame10MsInPtr, float* frame10MsOutPtr)
+{
+    return implProcessFrameFloat(frame10MsInPtr, frame10MsOutPtr);
+}
+
+size_t NoiseCleaner::getFrameSize() const
+{
+    return implGetFrameSize();
+}
+
+ModelId NoiseCleaner::getModelId() const
+{
+    return _modelId;
+}
+
+NoiseCleanerWithStats::NoiseCleanerWithStats(ModelId id) : NoiseCleaner(id)
+{
+}
+
+NoiseCleanerWithStats::FrameStats NoiseCleanerWithStats::getFrameStats() const
+{
+    return implGetFrameStats();
+}
+
+NoiseCleanerWithStats::CumulativeStats NoiseCleanerWithStats::
+    getCumulativeStats() const
+{
+    return implGetCumulativeStats();
+}
+
+KrispVoiceSdk::KrispVoiceSdk()
+    //: _audioProcessorBuilderPtr(std::make_unique<AudioProcessorBuilder>())
+    : _audioProcessorBuilderPtr(nullptr)
+{
+    _audioProcessorBuilderPtr = new AudioProcessorBuilder;
+}
+
+KrispVoiceSdk::~KrispVoiceSdk()
+{
+    delete _audioProcessorBuilderPtr;
+}
+
+void KrispVoiceSdk::registerModel(
+    ModelId id, const std::wstring& path, bool preload)
+{
+    _audioProcessorBuilderPtr->registerModel(id, path);
+    if (preload)
     {
-        builder_ptr = new AudioProcessorBuilder;
+        _audioProcessorBuilderPtr->preloadModel(id);
+        _audioProcessorBuilderPtr->setModelPolicy(
+            id, ModelMemoryPolicy::KeepCachedAfterLoad);
     }
-    return builder_ptr;
+    else
+    {
+        _audioProcessorBuilderPtr->setModelPolicy(
+            id, ModelMemoryPolicy::UnloadIfNotUsed);
+    }
 }
 
-void freeLibrary()
+void KrispVoiceSdk::registerModel(
+    ModelId id, void* blobPtr, size_t blobSize, bool preload)
 {
-    delete builder_ptr;
-    builder_ptr = nullptr;
+    _audioProcessorBuilderPtr->registerModel(id, blobPtr, blobSize);
+    if (preload)
+    {
+        _audioProcessorBuilderPtr->preloadModel(id);
+        _audioProcessorBuilderPtr->setModelPolicy(
+            id, ModelMemoryPolicy::KeepCachedAfterLoad);
+    }
+    else
+    {
+        _audioProcessorBuilderPtr->setModelPolicy(
+            id, ModelMemoryPolicy::UnloadIfNotUsed);
+    }
 }
 
-std::vector<ModelId> registerModelsDirectory(
-    const std::string& model_dir, const ModelNameToIdMap& model_name_to_id_map)
+constexpr ModelNameToIdMap modelMap = {
+    {"model-nc-8.kw", ModelId::MicNc8K},
+    {"model-nc-16.kw", ModelId::MicNc16K},
+    {"model-nc-32.kw", ModelId::MicNc32K},
+    {"model-bvc-32.thw", ModelId::MicBvc32K},
+    {"c5.n.s.20949d.kw", ModelId::MicNc8K},
+    {"c5.s.w.c9ac8f.kw", ModelId::MicNc16K},
+    {"c6.f.s.ced125.kw", ModelId::MicNc32K},
+    {"hs.c6.f.s.de56df.thw", ModelId::MicBvc32K}};
+
+std::vector<ModelId> KrispVoiceSdk::registerModels(
+    const std::string& modelsDirectory, bool preload)
 {
     return GetModelsFromDirectory(
-        *getBuilder(), model_dir, model_name_to_id_map);
+        *_audioProcessorBuilderPtr, modelsDirectory, modelMap);
 }
 
-void registerModel(ModelId id, const std::wstring& path)
+void KrispVoiceSdk::unregisterModel(ModelId id)
 {
-    getBuilder()->registerModel(id, path);
+    _audioProcessorBuilderPtr->unregisterModel(id);
 }
 
-void registerModel(ModelId id, void* blob_ptr, size_t blob_size)
+std::unique_ptr<NoiseCleaner> KrispVoiceSdk::createNc(SamplingRate rate)
 {
-    getBuilder()->registerModel(id, blob_ptr, blob_size);
+    return _audioProcessorBuilderPtr->createNc(rate);
 }
 
-void unregisterModel(ModelId id)
+std::unique_ptr<NoiseCleaner> KrispVoiceSdk::createNc(
+    SamplingRate rate, ModelId modelId)
 {
-    getBuilder()->unregisterModel(id);
+    return _audioProcessorBuilderPtr->createNc(rate, modelId);
 }
 
-void preloadModel(ModelId id)
-{
-    getBuilder()->preloadModel(id);
-}
-
-void setModelPolicy(ModelId id, ModelMemoryPolicy policy)
-{
-    getBuilder()->setModelPolicy(id, policy);
-}
-
-void loadBvcDeviceLists(
-    const std::string& allow_list_path, const std::string& block_list_path)
-{
-    getBuilder()->accessBvcDeviceManager().loadLists(
-        allow_list_path, block_list_path);
-}
-
-std::unique_ptr<AudioProcessor> createNc(SamplingRate rate)
-{
-    return getBuilder()->createNc(rate);
-}
-
-std::unique_ptr<AudioProcessor> createNc(SamplingRate rate, ModelId model_id)
-{
-    return getBuilder()->createNc(rate);
-}
-
-std::unique_ptr<AudioProcessor> createBvc(
+std::unique_ptr<NoiseCleaner> KrispVoiceSdk::createBvc(
     SamplingRate rate, const std::string& device)
 {
-    return getBuilder()->createBvc(rate, device);
+    return _audioProcessorBuilderPtr->createBvc(rate, device);
 }
 
-bool allowBvcDevice(const std::string& deviceName)
+// std::unique_ptr<NoiseCleanerWithStats>
+// KrispVoiceSdk::createNcWithStats(SamplingRate)
+//{
+// }
+//
+// std::unique_ptr<NoiseCleanerWithStats>
+// KrispVoiceSdk::createNcWithStats(SamplingRate, ModelId modelId)
+//{
+// }
+//
+// std::unique_ptr<NoiseCleanerWithStats>
+// KrispVoiceSdk::createBvcWithStats(SamplingRate, const std::string&)
+//{
+// }
+
+void KrispVoiceSdk::loadBvcDeviceLists(
+    const std::string& allowListPath, const std::string& blockListPath)
 {
-    return getBuilder()->accessBvcDeviceManager().allowDevice(deviceName);
+    _audioProcessorBuilderPtr->accessBvcDeviceManager().loadLists(
+        allowListPath, blockListPath);
+    ;
 }
 
-bool blockBvcDevice(const std::string& deviceName)
+bool KrispVoiceSdk::allowBvcDevice(const std::string& deviceName)
 {
-    return getBuilder()->accessBvcDeviceManager().blockDevice(deviceName);
+    return _audioProcessorBuilderPtr->accessBvcDeviceManager().allowDevice(deviceName);
 }
 
-bool removeBvcDevice(const std::string& deviceName)
+bool KrispVoiceSdk::blockBvcDevice(const std::string& deviceName)
 {
-    return getBuilder()->accessBvcDeviceManager().removeDevice(deviceName);
+    return _audioProcessorBuilderPtr->accessBvcDeviceManager().blockDevice(deviceName);
 }
 
-bool isBvcAllowed(const std::string& deviceName)
+bool KrispVoiceSdk::removeBvcDevice(const std::string& deviceName)
 {
-    return getBuilder()->accessBvcDeviceManager().isAllowed(deviceName);
+    return _audioProcessorBuilderPtr->accessBvcDeviceManager().removeDevice(
+        deviceName);
 }
 
-void forceBvc()
+bool KrispVoiceSdk::isBvcAllowed(const std::string& deviceName)
 {
-    getBuilder()->accessBvcDeviceManager().forceBvc(true);
+    return _audioProcessorBuilderPtr->accessBvcDeviceManager().isAllowed(
+        deviceName);
 }
 
-} // namespace KrispVoiceSDK
+void KrispVoiceSdk::forceBvc(bool force)
+{
+    _audioProcessorBuilderPtr->accessBvcDeviceManager().forceBvc(force);
+}
+
+} // namespace KrispVoiceSdk

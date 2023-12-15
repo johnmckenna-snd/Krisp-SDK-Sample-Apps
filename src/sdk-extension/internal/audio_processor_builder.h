@@ -3,14 +3,22 @@
 #include <memory>
 #include <string>
 
-#include "bvc_device_manager.h"
 #include "krisp-voice-sdk.h"
+#include "bvc_device_manager.h"
 #include "library_resources.h"
 #include "model.h"
 #include "model_container.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
+
+
+enum class ModelMemoryPolicy
+{
+    KeepCachedAfterLoad = 0,
+    UnloadIfNotUsed = 1
+};
+
 
 /**
  * The class is responsible to provide FrameCleaner object for the given audio
@@ -53,9 +61,9 @@ public:
      */
     void preloadModel(ModelId id);
 
-    std::unique_ptr<AudioProcessor> createBvc(SamplingRate, const std::string& device);
-    std::unique_ptr<AudioProcessor> createNc(SamplingRate);
-    std::unique_ptr<AudioProcessor> createNc(SamplingRate, ModelId modelId);
+    std::unique_ptr<NoiseCleaner> createBvc(SamplingRate, const std::string& device);
+    std::unique_ptr<NoiseCleaner> createNc(SamplingRate);
+    std::unique_ptr<NoiseCleaner> createNc(SamplingRate, ModelId modelId);
 
     BVCDeviceManager& accessBvcDeviceManager();
 

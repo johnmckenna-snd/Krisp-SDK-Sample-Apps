@@ -15,7 +15,7 @@
 std::pair<bool, std::string> WriteFramesToFile(
 	const std::string &fileName,
 	const std::vector<int16_t> &frames,
-	KrispVoiceSDK::SamplingRate samplingRate)
+	KrispVoiceSdk::SamplingRate samplingRate)
 {
 	return writeSoundFilePCM16(fileName, frames, static_cast<unsigned>(samplingRate));
 }
@@ -23,7 +23,7 @@ std::pair<bool, std::string> WriteFramesToFile(
 std::pair<bool, std::string> WriteFramesToFile(
 	const std::string &fileName,
 	const std::vector<float> &frames,
-	KrispVoiceSDK::SamplingRate samplingRate)
+	KrispVoiceSdk::SamplingRate samplingRate)
 {
 	return writeSoundFileFloat(fileName, frames, static_cast<unsigned>(samplingRate));
 }
@@ -45,35 +45,35 @@ void readAllFrames(const SoundFile &sndFile, std::vector<float> &frames)
 	sndFile.readAllFramesFloat(&frames);
 }
 
-std::pair<KrispVoiceSDK::SamplingRate, bool> getKrispSamplingRate(unsigned rate)
+std::pair<KrispVoiceSdk::SamplingRate, bool> getKrispSamplingRate(unsigned rate)
 {
-	std::pair<KrispVoiceSDK::SamplingRate, bool> result;
+	std::pair<KrispVoiceSdk::SamplingRate, bool> result;
 	result.second = true;
 	switch (rate)
 	{
 	case 8000:
-		result.first = KrispVoiceSDK::SamplingRate::Sr8000;
+		result.first = KrispVoiceSdk::SamplingRate::Sr8000;
 		break;
 	case 16000:
-		result.first = KrispVoiceSDK::SamplingRate::Sr16000;
+		result.first = KrispVoiceSdk::SamplingRate::Sr16000;
 		break;
 	case 32000:
-		result.first = KrispVoiceSDK::SamplingRate::Sr32000;
+		result.first = KrispVoiceSdk::SamplingRate::Sr32000;
 		break;
 	case 44100:
-		result.first = KrispVoiceSDK::SamplingRate::Sr44100;
+		result.first = KrispVoiceSdk::SamplingRate::Sr44100;
 		break;
 	case 48000:
-		result.first = KrispVoiceSDK::SamplingRate::Sr48000;
+		result.first = KrispVoiceSdk::SamplingRate::Sr48000;
 		break;
 	case 88200:
-		result.first = KrispVoiceSDK::SamplingRate::Sr88200;
+		result.first = KrispVoiceSdk::SamplingRate::Sr88200;
 		break;
 	case 96000:
-		result.first = KrispVoiceSDK::SamplingRate::Sr96000;
+		result.first = KrispVoiceSdk::SamplingRate::Sr96000;
 		break;
 	default:
-		result.first = KrispVoiceSDK::SamplingRate::Sr16000;
+		result.first = KrispVoiceSdk::SamplingRate::Sr16000;
 		result.second = false;
 	}
 	return result;
@@ -99,25 +99,28 @@ int cleanSndFile(
 	{
 		return error("Unsupported sample rate");
 	}
-	KrispVoiceSDK::SamplingRate samplingRate = samplingRateResult.first;
+	KrispVoiceSdk::SamplingRate samplingRate = samplingRateResult.first;
+
+	auto krispVoiceSdk = KrispVoiceSdk::KrispVoiceSdk();
 
 	try
 	{
-		KrispVoiceSDK::registerModelsDirectory(weight_dir);
+		krispVoiceSdk.registerModels(weight_dir, false);
 	}
-	catch (const KrispVoiceSDK::KrispModelScannerError & err)
+	catch (const KrispVoiceSdk::KrispModelScannerError & err)
 	{
 		return error(err.what());
 	}
 
-	using KrispVoiceSDK::AudioProcessor;
-	std::unique_ptr<AudioProcessor> frame_cleaner_ptr;
+	using KrispVoiceSdk::NoiseCleaner;
+	std::unique_ptr<NoiseCleaner> frame_cleaner_ptr;
+
 
 	try
 	{
-		frame_cleaner_ptr = KrispVoiceSDK::createNc(samplingRate);
+		frame_cleaner_ptr = krispVoiceSdk.createNc(samplingRate);
 	}
-	catch (const KrispVoiceSDK::KrispException & err)
+	catch (const KrispVoiceSdk::KrispException & err)
 	{
 		return error(err.what());
 	}

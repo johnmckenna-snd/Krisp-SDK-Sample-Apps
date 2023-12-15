@@ -7,7 +7,7 @@
 #include "krisp-enums.h"
 #include "model.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 template <unsigned long ModelCount>

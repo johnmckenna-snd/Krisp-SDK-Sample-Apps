@@ -1,96 +1,143 @@
 #ifndef KRISP_VOICE_SDK_H
 #define KRISP_VOICE_SDK_H
 
-#include <initializer_list>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "krisp-audio-processor.h"
-#include "krisp-enums.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
-typedef std::initializer_list<std::pair<const char*, ModelId>> ModelNameToIdMap;
 
-constexpr ModelNameToIdMap modelMap = {
-    {"model-nc-8.kw", ModelId::MicNc8K},
-    {"model-nc-16.kw", ModelId::MicNc16K},
-    {"model-nc-32.kw", ModelId::MicNc32K},
-    {"model-bvc-32.thw", ModelId::MicBvc32K},
-    {"c5.n.s.20949d.kw", ModelId::MicNc8K},
-    {"c5.s.w.c9ac8f.kw", ModelId::MicNc16K},
-    {"c6.f.s.ced125.kw", ModelId::MicNc32K},
-    {"hs.c6.f.s.de56df.thw", ModelId::MicBvc32K}};
-
-// Scan the directory for known SDK models and register all of them to the system. The function
-// will call registerModel for each identified model in the directory.
-std::vector<ModelId> registerModelsDirectory(const std::string& path, const ModelNameToIdMap& nameToId = modelMap);
-
-/**
- * The memory policy indicates if the model should be kept in the memory for future use if not
- * currently needed. Or the memory should be released if the model is not used.
- */
-enum class ModelMemoryPolicy
+enum class ModelId
 {
-    KeepCachedAfterLoad = 0,
-    UnloadIfNotUsed = 1
+    MicNc8K = 0,
+    MicNc16K = 1,
+    MicNc32K = 2,
+    MicBvc32K = 3,
+    SpeakerNc8K = 4,
+    SpeakerNc16K = 5,
+    Undefined = -1
 };
 
-class AudioProcessor;
 
-// Let the system know about the that model exists and available on the specified location. The
-// system model will be used on demand or if cached in advance.
-void registerModel(ModelId id, const std::wstring& path);
+enum class SamplingRate
+{
+    Sr8000 = 8000,
+    Sr16000 = 16000,
+    Sr32000 = 32000,
+    Sr44100 = 44100,
+    Sr48000 = 48000,
+    Sr88200 = 88200,
+    Sr96000 = 96000
+};
 
-// Let the system know that the model is available in the memory.
-void registerModel(ModelId id, void* blobPtr, size_t blobSize);
 
-// Let the system know that the model should not be used anymore for new noise cancellers
-void unregisterModel(ModelId id);
+class NoiseCleaner
+{
+public:
+    explicit NoiseCleaner(ModelId model_id);
+    virtual ~NoiseCleaner();
 
-// Load the model into the memory in advance before the need.
-void preloadModel(ModelId id);
+    NoiseCleaner(const NoiseCleaner&);
+    NoiseCleaner& operator=(const NoiseCleaner&);
 
-// Configure how model resources should be handled. Two policies are available.
-// Always keep cached or release if not used.
-void setModelPolicy(ModelId id, ModelMemoryPolicy policy);
+    bool processFrame(const short* frame10MsInPtr, short* frame10MsOutPtr);
+    bool processFrame(const float* frame10MsInPtr, float* frame10MsOutPtr);
 
-// Create noise cleaner with model auto selection
-std::unique_ptr<AudioProcessor> createNc(SamplingRate r);
+    size_t getFrameSize() const;
+    ModelId getModelId() const;
 
-// Create noise cleaner using the specified model
-std::unique_ptr<AudioProcessor> createNc(SamplingRate r, ModelId modelId);
+private:
+    ModelId _modelId;
 
-// Create noise cleaner with BVC if device is supported, otherwise NC model is used
-std::unique_ptr<AudioProcessor> createBvc(SamplingRate r, const std::string& device);
+    virtual size_t implGetFrameSize() const = 0;
+    virtual bool implProcessFramePcm16(const short* in, short* out) = 0;
+    virtual bool implProcessFrameFloat(const float* in, float* out) = 0;
+};
 
-// Create noise cleaner with model auto selection with per frame and total noise stats support
-std::unique_ptr<AudioNoiseCleanerWithStats> createNcWithStats(SamplingRate);
 
-// Create noise cleaner using the specified model with per frame and total noise stats support
-std::unique_ptr<AudioNoiseCleanerWithStats> createNcWithStats(SamplingRate, ModelId modelId);
+class NoiseCleanerWithStats : public NoiseCleaner
+{
+public:
+    explicit NoiseCleanerWithStats(ModelId id);
 
-// Create noise cleaner with noise stats support with BVC if device is supported, otherwise NC
-// model is used
-std::unique_ptr<AudioNoiseCleanerWithStats> createBvcWithStats(SamplingRate, const std::string&);
+    struct FrameStats
+    {
+        unsigned _voiceEnergy = 0;
+        unsigned _noiseEnergy = 0;
+    };
 
-// std::unique_ptr<AudioAccentProcessor> createAccentProcessor(SamplingRate r);
+    struct CumulativeStats
+    {
+        unsigned _talkTimeMs = 0;
+        unsigned _noNoiseMs = 0;
+        unsigned _lowNosieMs = 0;
+        unsigned _mediumNoiseMs = 0;
+        unsigned _highNoiseMs = 0;
+    };
 
-// release resources if the library is not used
-void freeLibrary();
+    FrameStats getFrameStats() const;
+    CumulativeStats getCumulativeStats() const;
 
-// Load BVC allow list and block list to the system. The lists will be used to consider if BVC
-// model can be used.
-void loadBvcDeviceLists(const std::string& allowListPath, const std::string& blockListPath);
+private:
+    virtual FrameStats implGetFrameStats() const = 0;
+    virtual CumulativeStats implGetCumulativeStats() const = 0;
+};
 
-bool allowBvcDevice(const std::string & deviceName);
-bool blockBvcDevice(const std::string & deviceName);
-bool removeBvcDevice(const std::string & deviceName);
-bool isBvcAllowed(const std::string & deviceName);
-void forceBvc();
 
-} // namespace KrispVoiceSDK
+class AudioProcessorBuilder;
 
+
+class KrispVoiceSdk final
+{
+public:
+    KrispVoiceSdk();
+    ~KrispVoiceSdk();
+
+    // Let the system know about the that model exists and available on the specified location. The
+    // system model will be used on demand or if cached in advance.
+    void registerModel(ModelId id, const std::wstring& path, bool preload);
+
+    // Let the system know that the model is available in the memory.
+    void registerModel(ModelId id, void* blobPtr, size_t blobSize, bool preload);
+
+    /// Scan the directory for known SDK models and register all of them to the system. The function
+    /// will call registerModel for each identified model in the directory.
+    std::vector<ModelId> registerModels(const std::string& modelsDirectory, bool preload);
+
+    // Let the system know that the model should not be used anymore for new noise cleaners
+    void unregisterModel(ModelId id);
+
+    // Create noise cleaner with model auto selection
+    std::unique_ptr<NoiseCleaner> createNc(SamplingRate rate);
+
+    // Create noise cleaner using the specified model
+    std::unique_ptr<NoiseCleaner> createNc(SamplingRate rate, ModelId modelId);
+
+    // Create noise cleaner with BVC if device is supported, otherwise NC model is used
+    std::unique_ptr<NoiseCleaner> createBvc(SamplingRate rate, const std::string& device);
+
+    //// Create noise cleaner with model auto selection with per frame and total noise stats support
+    //std::unique_ptr<NoiseCleanerWithStats> createNcWithStats(SamplingRate);
+
+    //// Create noise cleaner using the specified model with per frame and total noise stats support
+    //std::unique_ptr<NoiseCleanerWithStats> createNcWithStats(SamplingRate, ModelId modelId);
+
+    //// Create noise cleaner with noise stats support with BVC if device is supported, otherwise NC
+    //// model is used
+    //std::unique_ptr<NoiseCleanerWithStats> createBvcWithStats(SamplingRate, const std::string&);
+
+    void loadBvcDeviceLists(const std::string& allowListPath, const std::string& blockListPath);
+    bool allowBvcDevice(const std::string & deviceName);
+    bool blockBvcDevice(const std::string & deviceName);
+    bool removeBvcDevice(const std::string & deviceName);
+    bool isBvcAllowed(const std::string & deviceName);
+    void forceBvc(bool force);
+private:
+    AudioProcessorBuilder *_audioProcessorBuilderPtr;
+};
+
+}
 #endif

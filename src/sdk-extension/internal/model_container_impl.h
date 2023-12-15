@@ -1,7 +1,7 @@
 #include "krisp-exception.h"
 #include "model_container.h"
 
-namespace KrispVoiceSDK
+namespace KrispVoiceSdk
 {
 
 template <unsigned long ModelCount>
