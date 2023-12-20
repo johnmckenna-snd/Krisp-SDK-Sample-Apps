@@ -177,11 +177,6 @@ bool VoiceProcessorBuilder::allowBvcDevice(const std::string& deviceName)
     return _audioProcessorBuilderPtr->accessBvcDeviceManager().allowDevice(deviceName);
 }
 
-bool VoiceProcessorBuilder::removeBvcDevice(const std::string& deviceName)
-{
-    return _audioProcessorBuilderPtr->accessBvcDeviceManager().removeDevice(deviceName);
-}
-
 bool VoiceProcessorBuilder::isBvcAllowed(const std::string& deviceName)
 {
     return _audioProcessorBuilderPtr->accessBvcDeviceManager().isAllowed(deviceName);

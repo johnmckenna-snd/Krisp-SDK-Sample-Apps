@@ -225,16 +225,6 @@ public:
     /// @return true on success
     bool allowBvcDevice(const std::string& deviceName);
 
-    ///// @brief Do not allow the device for Krisp BVC tech, the block list file will be updated.
-    ///// @param[in] deviceName the name of the device
-    ///// @return true on success
-    //bool blockBvcDevice(const std::string& deviceName);
-
-    /// @brief Remove the device name from allow list or block list or both.
-    /// @param deviceName the name of the device
-    /// @return true on success
-    bool removeBvcDevice(const std::string& deviceName);
-
     /// @brief Check if the device will be allowed with Krisp BVC tech.
     /// @param deviceName the name of the device
     /// @return true if allowed with BVC tech, false otherwise
