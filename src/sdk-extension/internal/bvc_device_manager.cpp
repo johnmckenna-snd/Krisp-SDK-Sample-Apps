@@ -40,10 +40,10 @@ bool BVCDeviceManager::removeDevice(const std::string& device)
     {
         error = true;
     }
-    if (!_blockList.remove(device))
-    {
-        error = true;
-    }
+    //if (!_blockList.remove(device))
+    //{
+    //    error = true;
+    //}
     if (error)
     {
         return false;

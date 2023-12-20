@@ -88,7 +88,7 @@ private:
 };
 
 std::vector<ModelId> GetModelsFromDirectory(
-    AudioProcessorBuilder& builder,
+    InternalAudioProcessorBuilder& builder,
     const std::string& directory,
     const ModelNameToIdMap& modelNameToIdMap)
 {

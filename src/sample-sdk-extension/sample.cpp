@@ -6,7 +6,7 @@ void useCaseSingleStreamModelDir()
 {
     KrispVoiceSdk::registerModelsDirectory("/home/user/krisp_models");
     KrispVoiceSdk::SamplingRate rate = getSamplingRateOfTheAudio();
-    auto noiseCancellerPtr = KrispVoiceSdk::createNc(rate);
+    auto noiseCancellerPtr = VoiceProcessorBuilder::createOutboundNoiseCleaner(rate);
     auto frameSize = noiseCancellerPtr->getFrameSize();
     std::vector<short> inputFrame;
     std::vector<short> outputFrame;
@@ -20,8 +20,8 @@ void useCaseSingleStreamModelDir()
 void useCaseSingleStreamExplicitSingleModel()
 {
     auto modelPath = L"/home/user/c6.f.s.ced125.kw.thw";
-    KrispVoiceSdk::registerModel(KrispVoiceSdk::ModelId::MicNc32K, modelPath);
-    auto noiseCancellerPtr = KrispVoiceSdk::createNc(
+    VoiceProcessorBuilder::registerModel(VoiceProcessorBuilder::ModelId::MicNc32K, modelPath);
+    auto noiseCancellerPtr = VoiceProcessorBuilder::createNoiseCleaner(
         KrispVoiceSdk::SamplingRate::Sr32000, KrispVoiceSdk::ModelId::MicNc32K);
     auto frameSize = noiseCancellerPtr->getFrameSize();
     std::vector<short> inputFrame;
@@ -42,7 +42,7 @@ void useCaseMultipleModelsSingleStream()
     KrispVoiceSdk::registerModel(KrispVoiceSdk::ModelId::MicNc16K, wbModelPath);
     KrispVoiceSdk::registerModel(KrispVoiceSdk::ModelId::MicNc8K, nbModelPath);
     KrispVoiceSdk::SamplingRate rate = getSamplingRateOfTheAudio();
-    auto noiseCancellerPtr = KrispVoiceSdk::createNc(rate);
+    auto noiseCancellerPtr = KrispVoiceSdk::createOutboundNoiseCleaner(rate);
     auto frameSize = noiseCancellerPtr->getFrameSize();
     std::vector<short> outputFrame;
     outputFrame.resize(frameSize);
@@ -58,8 +58,8 @@ void useCaseMultipleStreamMultipleModels()
     KrispVoiceSdk::registerModelsDirectory(modelDirectoryPath);
     KrispVoiceSdk::SamplingRate stream1Rate = getSamplingRateOfTheAudio1();
     KrispVoiceSdk::SamplingRate stream2Rate = getSamplingRateOfTheAudio2();
-    auto noiseCanceller1Ptr = KrispVoiceSdk::createNc(stream1Rate);
-    auto noiseCanceller2Ptr = KrispVoiceSdk::createNc(stream2Rate);
+    auto noiseCanceller1Ptr = KrispVoiceSdk::createOutboundNoiseCleaner(stream1Rate);
+    auto noiseCanceller2Ptr = KrispVoiceSdk::createOutboundNoiseCleaner(stream2Rate);
     auto frame1Size = noiseCanceller1Ptr->getFrameSize();
     auto frame2Size = noiseCanceller2Ptr->getFrameSize();
     std::vector<short> inputFrame1, inputFrame2;
@@ -78,7 +78,7 @@ void useCaseMultipleStreamMultipleModels()
 int main()
 {
     KrispVoiceSdk::registerModelsDirectory("/home/user/krisp_models");
-    auto noiseCancellerPtr = KrispVoiceSdk::createNc(KrispVoiceSdk::SamplingRate::Sr32000);
+    auto noiseCancellerPtr = KrispVoiceSdk::createOutboundNoiseCleaner(KrispVoiceSdk::SamplingRate::Sr32000);
     auto frameSize = noiseCancellerPtr->getFrameSize();
     std::vector<short> outputFrame;
     outputFrame.resize(frameSize);

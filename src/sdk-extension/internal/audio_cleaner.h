@@ -9,18 +9,18 @@
 namespace KrispVoiceSdk
 {
 
-class AudioCleaner : public NoiseCleaner
+class NoiseCleanerImpl : public NoiseCleaner
 {
 public:
-    AudioCleaner(const std::shared_ptr<Model>& model_ptr, SamplingRate r);
+    NoiseCleanerImpl(const std::shared_ptr<Model>& model_ptr, SamplingRate r);
 
-    AudioCleaner(const AudioCleaner&);
-    AudioCleaner& operator=(const AudioCleaner&);
+    NoiseCleanerImpl(const NoiseCleanerImpl&);
+    NoiseCleanerImpl& operator=(const NoiseCleanerImpl&);
 
-    AudioCleaner(AudioCleaner&&);
-    AudioCleaner& operator=(AudioCleaner&&);
+    NoiseCleanerImpl(NoiseCleanerImpl&&);
+    NoiseCleanerImpl& operator=(NoiseCleanerImpl&&);
 
-    virtual ~AudioCleaner();
+    virtual ~NoiseCleanerImpl();
 
 private:
     std::shared_ptr<Model> _modelPtr;
@@ -34,19 +34,19 @@ private:
     size_t implGetFrameSize() const override;
 };
 
-class AudioCleanerWithStats : public NoiseCleanerWithStats
+class NoiseCleanerWithStatsImpl : public NoiseCleanerWithStats
 {
 public:
-    AudioCleanerWithStats(
+    NoiseCleanerWithStatsImpl(
         const std::shared_ptr<Model>& model_ptr, SamplingRate r);
 
-    AudioCleanerWithStats(const AudioCleanerWithStats&);
-    AudioCleanerWithStats& operator=(const AudioCleanerWithStats&);
+    NoiseCleanerWithStatsImpl(const NoiseCleanerWithStatsImpl&);
+    NoiseCleanerWithStatsImpl& operator=(const NoiseCleanerWithStatsImpl&);
 
-    AudioCleanerWithStats(AudioCleanerWithStats&&);
-    AudioCleanerWithStats& operator=(AudioCleanerWithStats&&);
+    NoiseCleanerWithStatsImpl(NoiseCleanerWithStatsImpl&&);
+    NoiseCleanerWithStatsImpl& operator=(NoiseCleanerWithStatsImpl&&);
 
-    virtual ~AudioCleanerWithStats() = default;
+    virtual ~NoiseCleanerWithStatsImpl() = default;
 
 private:
     std::shared_ptr<Model> _modelPtr;

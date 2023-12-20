@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "krisp-voice-sdk.h"
 #include "bvc_device_manager.h"
+#include "krisp-voice-sdk.h"
 #include "library_resources.h"
 #include "model.h"
 #include "model_container.h"
@@ -12,27 +12,25 @@
 namespace KrispVoiceSdk
 {
 
-
 enum class ModelMemoryPolicy
 {
     KeepCachedAfterLoad = 0,
     UnloadIfNotUsed = 1
 };
 
-
 /**
- * The class is responsible to provide FrameCleaner object for the given audio
+ * The class is responsible to provide NoiseCleaner object for the given audio
  * stream. The user should register a list of AI models to the class. The class
  * will use the optimum model for the given audio stream considering the
  * sampling rate and the device. The user should also provide BVC device allow
  * list and block list. The data will be used to select the optimum model
  * for the audio stream and the device.
  */
-class AudioProcessorBuilder
+class InternalAudioProcessorBuilder
 {
 public:
     static constexpr unsigned long ModelsNumber = 6;
-    AudioProcessorBuilder();
+    InternalAudioProcessorBuilder();
     /**
      * Let the system know that the model is available in the memory.
      * You must call unregisterModel before using the blobAddr memory block
@@ -61,10 +59,13 @@ public:
      */
     void preloadModel(ModelId id);
 
-    std::unique_ptr<NoiseCleaner> createBvc(SamplingRate, const std::string& device);
-    std::unique_ptr<NoiseCleaner> createNc(SamplingRate);
-    std::unique_ptr<NoiseCleaner> createNc(SamplingRate, ModelId modelId);
-
+    std::unique_ptr<NoiseCleaner> createOutboundBvcNoiseCleaner(SamplingRate, const std::string& device);
+    std::unique_ptr<NoiseCleanerWithStats> createOutboundBvcNoiseCleanerWithStats(
+        SamplingRate, const std::string& device);
+    std::unique_ptr<NoiseCleaner> createOutboundNoiseCleaner(SamplingRate);
+    std::unique_ptr<NoiseCleanerWithStats> createOutboundNoiseCleanerWithStats(SamplingRate);
+    std::unique_ptr<NoiseCleaner> createNoiseCleaner(SamplingRate, ModelId modelId);
+    std::unique_ptr<NoiseCleanerWithStats> createNoiseCleanerWithStats(SamplingRate, ModelId modelId);
     BVCDeviceManager& accessBvcDeviceManager();
 
 private:
@@ -78,4 +79,4 @@ private:
     std::shared_ptr<Model> getModel(ModelId);
 };
 
-} // namespace KrispVoiceSDK
+} // namespace KrispVoiceSdk

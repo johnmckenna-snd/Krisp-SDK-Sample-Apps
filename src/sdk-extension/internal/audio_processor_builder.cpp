@@ -8,41 +8,37 @@
 #include "audio_cleaner.h"
 #include "krisp-exception.h"
 #include "model.h"
-
 #include "model_container_impl.h"
 
 namespace KrispVoiceSdk
 {
 
-AudioProcessorBuilder::AudioProcessorBuilder()
-    : _modelContainer(), _deviceManager(), _libraryPtr()
+InternalAudioProcessorBuilder::InternalAudioProcessorBuilder() : _modelContainer(), _deviceManager(), _libraryPtr()
 {
     _libraryPtr = getLibrary();
 }
 
-void AudioProcessorBuilder::registerModel(ModelId id, const std::wstring& path)
+void InternalAudioProcessorBuilder::registerModel(ModelId id, const std::wstring& path)
 {
     _modelContainer.registerModel(id, path);
 }
 
-void AudioProcessorBuilder::registerModel(
-    ModelId id, void* blobAddr, size_t blobSize)
+void InternalAudioProcessorBuilder::registerModel(ModelId id, void* blobAddr, size_t blobSize)
 {
     _modelContainer.registerModel(id, blobAddr, blobSize);
 }
 
-void AudioProcessorBuilder::unregisterModel(ModelId id)
+void InternalAudioProcessorBuilder::unregisterModel(ModelId id)
 {
     _modelContainer.unregisterModel(id);
 }
 
-void AudioProcessorBuilder::preloadModel(ModelId id)
+void InternalAudioProcessorBuilder::preloadModel(ModelId id)
 {
     _modelContainer.preloadModel(id);
 }
 
-void AudioProcessorBuilder::setModelPolicy(
-    ModelId id, ModelMemoryPolicy policyId)
+void InternalAudioProcessorBuilder::setModelPolicy(ModelId id, ModelMemoryPolicy policyId)
 {
     if (static_cast<unsigned>(id) >= _modelContainer.getModelCount())
     {
@@ -61,7 +57,7 @@ void AudioProcessorBuilder::setModelPolicy(
     }
 }
 
-std::shared_ptr<Model> AudioProcessorBuilder::chooseModel8K()
+std::shared_ptr<Model> InternalAudioProcessorBuilder::chooseModel8K()
 {
     if (_modelContainer.isModelRegistered(ModelId::MicNc8K))
     {
@@ -75,13 +71,12 @@ std::shared_ptr<Model> AudioProcessorBuilder::chooseModel8K()
         }
         else
         {
-            throw KrispModelSelectionError(
-                "No suitable model found for 8KHz sampling rate.");
+            throw KrispModelSelectionError("No suitable model found for 8KHz sampling rate.");
         }
     }
 }
 
-std::shared_ptr<Model> AudioProcessorBuilder::chooseModel16K()
+std::shared_ptr<Model> InternalAudioProcessorBuilder::chooseModel16K()
 {
     if (_modelContainer.isModelRegistered(ModelId::MicNc16K))
     {
@@ -91,19 +86,17 @@ std::shared_ptr<Model> AudioProcessorBuilder::chooseModel16K()
     {
         return getModel(ModelId::MicNc32K);
     }
-    throw KrispModelSelectionError(
-        "No suitable model registered for 16KHz sampling rate.");
+    throw KrispModelSelectionError("No suitable model registered for 16KHz sampling rate.");
 }
 
-std::shared_ptr<Model> AudioProcessorBuilder::chooseModel(
+std::shared_ptr<Model> InternalAudioProcessorBuilder::chooseModel(
     const std::string& device, SamplingRate r, bool tryBvc)
 {
     if (r == SamplingRate::Sr8000)
     {
         return chooseModel8K();
     }
-    if (tryBvc && _deviceManager.isAllowed(device) &&
-        _modelContainer.isModelRegistered(ModelId::MicBvc32K))
+    if (tryBvc && _deviceManager.isAllowed(device) && _modelContainer.isModelRegistered(ModelId::MicBvc32K))
     {
         return getModel(ModelId::MicBvc32K);
     }
@@ -115,11 +108,10 @@ std::shared_ptr<Model> AudioProcessorBuilder::chooseModel(
     {
         return getModel(ModelId::MicNc32K);
     }
-    throw KrispModelSelectionError(
-        "No suitable model is registered for 32KHz and above sampling rates.");
+    throw KrispModelSelectionError("No suitable model is registered for 32KHz and above sampling rates.");
 }
 
-std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createNc(SamplingRate r)
+std::unique_ptr<NoiseCleaner> InternalAudioProcessorBuilder::createOutboundNoiseCleaner(SamplingRate r)
 {
     constexpr bool tryBvc = false;
     auto modelPtr = this->chooseModel("", r, tryBvc);
@@ -127,22 +119,43 @@ std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createNc(SamplingRate r)
     {
         throw KrispModelSelectionError("Failed to choose a model");
     }
-    return std::make_unique<AudioCleaner>(modelPtr, r);
+    return std::make_unique<NoiseCleanerImpl>(modelPtr, r);
 }
 
-std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createNc(
+std::unique_ptr<NoiseCleanerWithStats> InternalAudioProcessorBuilder::createOutboundNoiseCleanerWithStats(
+    SamplingRate r)
+{
+    constexpr bool tryBvc = false;
+    auto modelPtr = this->chooseModel("", r, tryBvc);
+    if (!modelPtr.get())
+    {
+        throw KrispModelSelectionError("Failed to choose a model");
+    }
+    return std::make_unique<NoiseCleanerWithStatsImpl>(modelPtr, r);
+}
+
+std::unique_ptr<NoiseCleaner> InternalAudioProcessorBuilder::createNoiseCleaner(SamplingRate r, ModelId model_id)
+{
+    auto modelPtr = this->getModel(model_id);
+    if (!modelPtr.get())
+    {
+        throw KrispModelSelectionError("Failed to load the specified model. Is it registered?");
+    }
+    return std::make_unique<NoiseCleanerImpl>(modelPtr, r);
+}
+
+std::unique_ptr<NoiseCleanerWithStats> InternalAudioProcessorBuilder::createNoiseCleanerWithStats(
     SamplingRate r, ModelId model_id)
 {
     auto modelPtr = this->getModel(model_id);
     if (!modelPtr.get())
     {
-        throw KrispModelSelectionError(
-            "Failed to load the specified model. Is it registered?");
+        throw KrispModelSelectionError("Failed to load the specified model. Is it registered?");
     }
-    return std::make_unique<AudioCleaner>(modelPtr, r);
+    return std::make_unique<NoiseCleanerWithStatsImpl>(modelPtr, r);
 }
 
-std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createBvc(
+std::unique_ptr<NoiseCleaner> InternalAudioProcessorBuilder::createOutboundBvcNoiseCleaner(
     SamplingRate r, const std::string& device)
 {
     constexpr bool tryBvc = true;
@@ -151,10 +164,22 @@ std::unique_ptr<NoiseCleaner> AudioProcessorBuilder::createBvc(
     {
         throw KrispModelSelectionError("Failed to choose a model");
     }
-    return std::make_unique<AudioCleaner>(modelPtr, r);
+    return std::make_unique<NoiseCleanerImpl>(modelPtr, r);
 }
 
-std::shared_ptr<Model> AudioProcessorBuilder::getModel(ModelId id)
+std::unique_ptr<NoiseCleanerWithStats> InternalAudioProcessorBuilder::createOutboundBvcNoiseCleanerWithStats(
+    SamplingRate r, const std::string& device)
+{
+    constexpr bool tryBvc = true;
+    auto modelPtr = this->chooseModel(device, r, tryBvc);
+    if (!modelPtr.get())
+    {
+        throw KrispModelSelectionError("Failed to choose a model");
+    }
+    return std::make_unique<NoiseCleanerWithStatsImpl>(modelPtr, r);
+}
+
+std::shared_ptr<Model> InternalAudioProcessorBuilder::getModel(ModelId id)
 {
     auto modelPtr = _modelContainer.getModel(id);
     if (!modelPtr.get())
@@ -164,9 +189,9 @@ std::shared_ptr<Model> AudioProcessorBuilder::getModel(ModelId id)
     return modelPtr;
 }
 
-BVCDeviceManager& AudioProcessorBuilder::accessBvcDeviceManager()
+BVCDeviceManager& InternalAudioProcessorBuilder::accessBvcDeviceManager()
 {
     return this->_deviceManager;
 }
 
-} // namespace KrispVoiceSDK
+} // namespace KrispVoiceSdk

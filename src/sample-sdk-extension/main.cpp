@@ -101,11 +101,11 @@ int cleanSndFile(
 	}
 	KrispVoiceSdk::SamplingRate samplingRate = samplingRateResult.first;
 
-	auto krispVoiceSdk = KrispVoiceSdk::KrispVoiceSdk();
+	auto vBuilder = KrispVoiceSdk::VoiceProcessorBuilder();
 
 	try
 	{
-		krispVoiceSdk.registerModels(weight_dir, false);
+		vBuilder.registerModels(weight_dir, false);
 	}
 	catch (const KrispVoiceSdk::KrispModelScannerError & err)
 	{
@@ -115,10 +115,9 @@ int cleanSndFile(
 	using KrispVoiceSdk::NoiseCleaner;
 	std::unique_ptr<NoiseCleaner> frame_cleaner_ptr;
 
-
 	try
 	{
-		frame_cleaner_ptr = krispVoiceSdk.createNc(samplingRate);
+		frame_cleaner_ptr = vBuilder.createOutboundNoiseCleaner(samplingRate);
 	}
 	catch (const KrispVoiceSdk::KrispException & err)
 	{

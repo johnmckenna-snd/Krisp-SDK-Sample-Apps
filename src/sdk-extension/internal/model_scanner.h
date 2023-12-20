@@ -11,7 +11,7 @@ namespace KrispVoiceSdk
 
 typedef std::initializer_list<std::pair<const char*, ModelId>> ModelNameToIdMap;
 std::vector<ModelId> GetModelsFromDirectory(
-    AudioProcessorBuilder& factory,
+    InternalAudioProcessorBuilder& factory,
     const std::string& directory,
     const ModelNameToIdMap& nameToIdMap);
 

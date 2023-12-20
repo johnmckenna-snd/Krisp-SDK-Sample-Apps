@@ -7,7 +7,7 @@
 namespace KrispVoiceSdk
 {
 
-AudioCleaner::AudioCleaner(
+NoiseCleanerImpl::NoiseCleanerImpl(
     const std::shared_ptr<Model>& model_ptr, SamplingRate r)
     : NoiseCleaner(model_ptr->getId())
     , _modelPtr(model_ptr)
@@ -25,7 +25,7 @@ AudioCleaner::AudioCleaner(
         _modelAlias.c_str());
 }
 
-AudioCleaner::~AudioCleaner()
+NoiseCleanerImpl::~NoiseCleanerImpl()
 {
     if (_krispSessionId)
     {
@@ -34,7 +34,7 @@ AudioCleaner::~AudioCleaner()
     }
 }
 
-AudioCleaner::AudioCleaner(const AudioCleaner& copy)
+NoiseCleanerImpl::NoiseCleanerImpl(const NoiseCleanerImpl& copy)
     : NoiseCleaner(copy)
     , _modelPtr(copy._modelPtr)
     , _krispSessionId(nullptr)
@@ -52,7 +52,7 @@ AudioCleaner::AudioCleaner(const AudioCleaner& copy)
     }
 }
 
-bool AudioCleaner::implProcessFramePcm16(
+bool NoiseCleanerImpl::implProcessFramePcm16(
     const short* frame_in, short* frame_out)
 {
     int r = krispAudioNcCleanAmbientNoiseInt16(
@@ -65,7 +65,7 @@ bool AudioCleaner::implProcessFramePcm16(
     return false;
 }
 
-bool AudioCleaner::implProcessFrameFloat(
+bool NoiseCleanerImpl::implProcessFrameFloat(
     const float* frame_in, float* frame_out)
 {
     int r = krispAudioNcCleanAmbientNoiseFloat(
@@ -78,12 +78,12 @@ bool AudioCleaner::implProcessFrameFloat(
     return false;
 }
 
-size_t AudioCleaner::implGetFrameSize() const
+size_t NoiseCleanerImpl::implGetFrameSize() const
 {
     return this->_frameSize;
 }
 
-AudioCleanerWithStats::AudioCleanerWithStats(
+NoiseCleanerWithStatsImpl::NoiseCleanerWithStatsImpl(
     const std::shared_ptr<Model>& model_ptr, SamplingRate r)
     : NoiseCleanerWithStats(model_ptr->getId())
     , _modelPtr(model_ptr)
@@ -103,7 +103,7 @@ AudioCleanerWithStats::AudioCleanerWithStats(
         _modelAlias.c_str());
 }
 
-AudioCleanerWithStats::AudioCleanerWithStats(const AudioCleanerWithStats& copy)
+NoiseCleanerWithStatsImpl::NoiseCleanerWithStatsImpl(const NoiseCleanerWithStatsImpl& copy)
     : NoiseCleanerWithStats(copy._modelPtr->getId())
     , _modelPtr(copy._modelPtr)
     , _krispSessionId(nullptr)
@@ -120,8 +120,8 @@ AudioCleanerWithStats::AudioCleanerWithStats(const AudioCleanerWithStats& copy)
         _modelAlias.c_str());
 }
 
-AudioCleanerWithStats& AudioCleanerWithStats::operator=(
-    const AudioCleanerWithStats& copy)
+NoiseCleanerWithStatsImpl& NoiseCleanerWithStatsImpl::operator=(
+    const NoiseCleanerWithStatsImpl& copy)
 {
     _modelPtr = copy._modelPtr;
     _krispSessionId = nullptr;
@@ -140,7 +140,7 @@ AudioCleanerWithStats& AudioCleanerWithStats::operator=(
     return *this;
 }
 
-AudioCleanerWithStats::AudioCleanerWithStats(AudioCleanerWithStats&& copy)
+NoiseCleanerWithStatsImpl::NoiseCleanerWithStatsImpl(NoiseCleanerWithStatsImpl&& copy)
     : NoiseCleanerWithStats(copy._modelPtr->getId())
     , _modelPtr(std::move(copy._modelPtr))
     , _krispSessionId(copy._krispSessionId)
@@ -153,8 +153,8 @@ AudioCleanerWithStats::AudioCleanerWithStats(AudioCleanerWithStats&& copy)
     copy._krispSessionId = nullptr;
 }
 
-AudioCleanerWithStats& AudioCleanerWithStats::operator=(
-    AudioCleanerWithStats&& copy)
+NoiseCleanerWithStatsImpl& NoiseCleanerWithStatsImpl::operator=(
+    NoiseCleanerWithStatsImpl&& copy)
 {
     _modelPtr = std::move(copy._modelPtr);
     _krispSessionId = copy._krispSessionId;
@@ -167,7 +167,7 @@ AudioCleanerWithStats& AudioCleanerWithStats::operator=(
     return *this;
 }
 
-bool AudioCleanerWithStats::implProcessFramePcm16(
+bool NoiseCleanerWithStatsImpl::implProcessFramePcm16(
     const short* frame_in, short* frame_out)
 {
     KrispAudioNcPerFrameInfo energy_info;
@@ -190,7 +190,7 @@ bool AudioCleanerWithStats::implProcessFramePcm16(
     return false;
 }
 
-bool AudioCleanerWithStats::implProcessFrameFloat(
+bool NoiseCleanerWithStatsImpl::implProcessFrameFloat(
     const float* frame_in, float* frame_out)
 {
     KrispAudioNcPerFrameInfo energy_info;
@@ -213,7 +213,7 @@ bool AudioCleanerWithStats::implProcessFrameFloat(
     return false;
 }
 
-AudioCleanerWithStats::CumulativeStats AudioCleanerWithStats::
+NoiseCleanerWithStatsImpl::CumulativeStats NoiseCleanerWithStatsImpl::
     implGetCumulativeStats() const
 {
     KrispAudioNcStats krisp_stats;
@@ -227,13 +227,13 @@ AudioCleanerWithStats::CumulativeStats AudioCleanerWithStats::
     return stats;
 }
 
-AudioCleanerWithStats::FrameStats AudioCleanerWithStats::implGetFrameStats()
+NoiseCleanerWithStatsImpl::FrameStats NoiseCleanerWithStatsImpl::implGetFrameStats()
     const
 {
     return this->_frameStats;
 }
 
-size_t AudioCleanerWithStats::implGetFrameSize() const
+size_t NoiseCleanerWithStatsImpl::implGetFrameSize() const
 {
     return this->_frameSize;
 }

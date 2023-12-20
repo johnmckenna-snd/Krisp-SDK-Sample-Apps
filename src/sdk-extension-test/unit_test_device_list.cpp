@@ -229,9 +229,9 @@ TEST_F(InternalTest, ModelContainer)
 	}
 }
 
-TEST_F(InternalTest, AudioProcessorBuilder)
+TEST_F(InternalTest, InternalAudioProcessorBuilder)
 {
-	KrispVoiceSdk::AudioProcessorBuilder builder;
+	KrispVoiceSdk::InternalAudioProcessorBuilder builder;
 	using ModelId = KrispVoiceSdk::ModelId;
 	using SamplingRate = KrispVoiceSdk::SamplingRate;
 	EXPECT_NO_THROW(builder.accessBvcDeviceManager().loadLists(allowListPath, blockListPath));
@@ -239,25 +239,86 @@ TEST_F(InternalTest, AudioProcessorBuilder)
 	EXPECT_NO_THROW(builder.registerModel(ModelId::MicNc16K, model_nc_16k));
 	EXPECT_NO_THROW(builder.registerModel(ModelId::MicNc32K, model_nc_32k));
 	EXPECT_NO_THROW(builder.registerModel(ModelId::MicBvc32K, model_bvc_32k));
-	auto audio_cleaner_ptr = builder.createNc(SamplingRate::Sr8000);
+	auto audio_cleaner_ptr = builder.createOutboundNoiseCleaner(SamplingRate::Sr8000);
 	EXPECT_NE(audio_cleaner_ptr.get(), nullptr);
-	auto audio_cleaner_2_ptr = builder.createNc(SamplingRate::Sr8000);
+	auto audio_cleaner_2_ptr = builder.createOutboundNoiseCleaner(SamplingRate::Sr8000);
 	EXPECT_NE(audio_cleaner_2_ptr.get(), nullptr);
 	EXPECT_NE(audio_cleaner_ptr.get(), audio_cleaner_2_ptr.get());
-	auto audio_cleaner_3_ptr = builder.createNc(SamplingRate::Sr16000, ModelId::MicNc16K);
+	auto audio_cleaner_3_ptr = builder.createNoiseCleaner(SamplingRate::Sr16000, ModelId::MicNc16K);
 	EXPECT_NE(audio_cleaner_3_ptr.get(), nullptr);
 }
 
 TEST(ClientCode, BvcDeviceLists)
 {
-	auto sdk = KrispVoiceSdk::KrispVoiceSdk();
+	auto vBuilder = KrispVoiceSdk::VoiceProcessorBuilder();
 	using KrispVoiceSdk::KrispDeviceListError;
 
-	EXPECT_THROW(sdk.loadBvcDeviceLists("a", "b"), KrispDeviceListError);
-	EXPECT_THROW(sdk.loadBvcDeviceLists(allowListPath, "b"), KrispDeviceListError);
-	EXPECT_THROW(sdk.loadBvcDeviceLists("a", blockListPath), KrispDeviceListError);
-	EXPECT_NO_THROW(sdk.loadBvcDeviceLists(allowListPath, blockListPath));
-	EXPECT_NO_THROW(sdk.loadBvcDeviceLists(allowListPath, badListPath));
+	EXPECT_THROW(vBuilder.loadBvcDeviceLists("a", "b"), KrispDeviceListError);
+	EXPECT_THROW(vBuilder.loadBvcDeviceLists(allowListPath, "b"), KrispDeviceListError);
+	EXPECT_THROW(vBuilder.loadBvcDeviceLists("a", blockListPath), KrispDeviceListError);
+	EXPECT_NO_THROW(vBuilder.loadBvcDeviceLists(allowListPath, blockListPath));
+	EXPECT_NO_THROW(vBuilder.loadBvcDeviceLists(allowListPath, badListPath));
+}
+
+TEST(ClientCode, BvcDeviceListsNotSpecified)
+{
+	auto vBuilder = KrispVoiceSdk::VoiceProcessorBuilder();
+	using KrispVoiceSdk::KrispDeviceListError;
+	std::string device_1 = "Apple Air Pods Pro 2";
+	EXPECT_THROW(vBuilder.allowBvcDevice(device_1), KrispDeviceListError);
+	EXPECT_FALSE(vBuilder.removeBvcDevice(device_1));
+	EXPECT_FALSE(vBuilder.isBvcAllowed(device_1));
+	EXPECT_NO_THROW(vBuilder.forceBvc(true));
+	EXPECT_TRUE(vBuilder.isBvcAllowed(device_1));
+	EXPECT_NO_THROW(vBuilder.forceBvc(false));
+	EXPECT_FALSE(vBuilder.isBvcAllowed(device_1));
+}
+
+TEST(ClientCode, BvcDeviceListsSpecified)
+{
+	{
+		auto vBuilder = KrispVoiceSdk::VoiceProcessorBuilder();
+		using KrispVoiceSdk::KrispDeviceListError;
+		{
+			KrispVoiceSdk::DeviceList allowList;
+			EXPECT_NO_THROW(allowList.createEmptyFile(allowListPath));
+		}
+		auto blockDevices = {
+			"super device 1",
+			"super device 2",
+			air_pods_pro_2,
+			"Apple Air Pods Pro 1",
+			"Another Fake device"
+		};
+		{
+			KrispVoiceSdk::DeviceList blockList;
+			EXPECT_NO_THROW(blockList.createEmptyFile(blockListPath));
+			for (auto device : blockDevices)
+			{
+				EXPECT_TRUE(blockList.add(device));
+			}
+		}
+		EXPECT_NO_THROW(vBuilder.loadBvcDeviceLists(allowListPath, blockListPath));
+		for (auto device : blockDevices)
+		{
+			EXPECT_FALSE(vBuilder.isBvcAllowed(device));
+			vBuilder.forceBvc(true);
+			EXPECT_FALSE(vBuilder.isBvcAllowed(device));
+			vBuilder.forceBvc(false);
+			EXPECT_FALSE(vBuilder.isBvcAllowed(device));
+		}
+		auto allow_devices = {"cheap headset", "any headset"};
+		for (auto device : allow_devices)
+		{
+			EXPECT_TRUE(vBuilder.allowBvcDevice(device));
+			EXPECT_FALSE(vBuilder.allowBvcDevice(device));
+		}
+		{
+			KrispVoiceSdk::DeviceList allowList;
+			ASSERT_NO_THROW(allowList.loadFromFile(allowListPath));
+			EXPECT_EQ(allowList.count(), allow_devices.size());
+		}
+	}
 }
 
 }
